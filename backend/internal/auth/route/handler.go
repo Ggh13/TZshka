@@ -104,6 +104,7 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
-	r.POST("/register", h.Register)
-	r.POST("/login", h.Login)
+	api := r.Group("/api")
+	api.POST("/register", h.Register)
+	api.POST("/login", h.Login)
 }

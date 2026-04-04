@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -53,12 +54,29 @@ func main() {
 	authHandler := route.New(authSvc, zapLog)
 
 	r := gin.Default()
+	r.Use(corsMiddleware())
 
 	authHandler.RegisterRoutes(r)
 
 	zapLog.Info("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {
 		zapLog.Fatal("Server error", zap.Error(err))
+	}
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Header("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
 	}
 }
 
