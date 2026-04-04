@@ -27,13 +27,13 @@ function LoginPage() {
     setIsLoading(true)
 
     try {
-    const result = await loginUser(formData)
-    console.log('Login success:', result)
+      const result = await loginUser(formData)
+      console.log('Login success:', result)
 
-    localStorage.setItem('token', result.token)
+      localStorage.setItem('token', result.token)
 
-    setMessage('Вход выполнен успешно')
-    navigate('/')
+      setMessage('Вход выполнен успешно')
+      navigate('/')
     } catch (error) {
       console.error('Login error:', error.message)
       setMessage(`Ошибка: ${error.message}`)
