@@ -1,12 +1,7 @@
-import './App.css'
+import AppRouter from './router/AppRouter'
 
 function App() {
-  return (
-    <div>
-      <h1>AI Ambiguity Detector</h1>
-      <p>Frontend is running</p>
-    </div>
-  )
+  return <AppRouter />
 }
 
 export default App
