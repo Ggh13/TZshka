@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { loginUser } from '../api/auth'
 
 function LoginPage() {
@@ -9,6 +10,7 @@ function LoginPage() {
 
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -25,9 +27,13 @@ function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await loginUser(formData)
-      console.log('Login success:', result)
-      setMessage('Вход выполнен успешно')
+    const result = await loginUser(formData)
+    console.log('Login success:', result)
+
+    localStorage.setItem('token', result.token)
+
+    setMessage('Вход выполнен успешно')
+    navigate('/')
     } catch (error) {
       console.error('Login error:', error.message)
       setMessage(`Ошибка: ${error.message}`)
