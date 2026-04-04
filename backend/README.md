@@ -23,7 +23,18 @@ go build -o app.exe ./cmd/main.go
 ### Docker
 
 ```bash
+# Первый запуск или сброс данных
+docker-compose down -v
 docker-compose up --build
+
+# Последующие запуски
+docker-compose up
+```
+
+### Остановка
+
+```bash
+docker-compose down
 ```
 
 ## Тесты
