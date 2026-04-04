@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { loginUser } from '../api/auth'
 
 function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
+
+  const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -15,9 +19,21 @@ function LoginPage() {
     }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    console.log('Login form data:', formData)
+    setMessage('')
+    setIsLoading(true)
+
+    try {
+      const result = await loginUser(formData)
+      console.log('Login success:', result)
+      setMessage('Вход выполнен успешно')
+    } catch (error) {
+      console.error('Login error:', error.message)
+      setMessage(`Ошибка: ${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -51,8 +67,12 @@ function LoginPage() {
           />
         </div>
 
-        <button type="submit">Войти</button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Входим...' : 'Войти'}
+        </button>
       </form>
+
+      {message && <p style={{ marginTop: '16px' }}>{message}</p>}
     </div>
   )
 }

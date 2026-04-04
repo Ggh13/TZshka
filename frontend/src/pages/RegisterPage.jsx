@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { registerUser } from '../api/auth'
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -6,6 +7,9 @@ function RegisterPage() {
     password: '',
     role: 'user',
   })
+
+  const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -16,9 +20,21 @@ function RegisterPage() {
     }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    console.log('Register form data:', formData)
+    setMessage('')
+    setIsLoading(true)
+
+    try {
+      const result = await registerUser(formData)
+      console.log('Register success:', result)
+      setMessage('Регистрация прошла успешно')
+    } catch (error) {
+      console.error('Register error:', error.message)
+      setMessage(`Ошибка: ${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -66,8 +82,12 @@ function RegisterPage() {
           </select>
         </div>
 
-        <button type="submit">Зарегистрироваться</button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Регистрируем...' : 'Зарегистрироваться'}
+        </button>
       </form>
+
+      {message && <p style={{ marginTop: '16px' }}>{message}</p>}
     </div>
   )
 }
