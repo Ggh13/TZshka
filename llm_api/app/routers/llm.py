@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.post('/text', response_model=LLMOutputSchema)
+@router.get('/text', response_model=LLMOutputSchema)
 async def get_response_by_text(
     payload: TextInputSchema
 ):
