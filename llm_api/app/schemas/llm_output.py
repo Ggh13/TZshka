@@ -2,16 +2,12 @@ from pydantic import BaseModel, Field
 
 
 class LLMOutput(BaseModel):
-    paragraphs_to_edit: str = Field(description="""
-    Части технического задания, которые нужно улучшить в соответствии с правилами 
-    составления технических заданий. Если в тексте не выявлено нарушений, вывести 
-    соответствующий ответ пользователю.
-    """)
-    recommendations: str = Field(description="""
-    Рекоменадции по улучшению частей технического задания в соответствии с правилами 
-    составления технических заданий. Если в тексте не выявлено нарушений, вывести 
-    соответствующий ответ пользователю.
-    """)
-    feedback: str = Field(description="""
-    Общий отзыв о техническом задании пользователя
+    status: str = Field(..., description="valid | issues_found")
+    issues: list[dict] = Field(..., description="""
+    Формат ответа в случае status == issues_found:
+    {
+      "rule_id": "...",
+      "problem": "...",
+      "explanation": "..."
+    }
     """)
