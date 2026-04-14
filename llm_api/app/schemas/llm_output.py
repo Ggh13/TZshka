@@ -11,3 +11,5 @@ class LLMOutput(BaseModel):
       "explanation": "..."
     }
     """)
+    feedback: str = Field(..., description="Объективная и справедливая оценка технического задания")
+
