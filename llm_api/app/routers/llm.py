@@ -16,7 +16,9 @@ async def get_response_by_text(
 ):
     user_content = payload.content
     try:
-        llm_output = LLM.invoke(user_content)
+        llm_output = LLM.invoke({
+            "technical_specification": user_content
+        })
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="LLM is not available")
 

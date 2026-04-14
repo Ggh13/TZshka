@@ -2,7 +2,7 @@
 
 ### 1. **Загрузка ТЗ в виде сплошного текста**
 
-**Post** `llm/text`
+**POST** `llm/text`
 
 **Request:**
 ```json
