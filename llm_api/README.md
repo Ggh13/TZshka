@@ -26,3 +26,29 @@
   "feedback": "very nice bro"
 }
 ```
+
+### 2. **Загрузка ТЗ в виде файла .txt**
+
+**POST** `llm/text_file`
+
+**Request (multipart/form-data):**
+
+```
+file: tz.txt
+```
+
+**Response (200)**
+
+```json
+{
+ "status": "valid | issues_found",
+ "issues": [
+   {
+     "rule_id": "R1",
+     "problem": "net tz",
+     "explanation": "resultat hz"
+   }
+ ],
+  "feedback": "very nice bro"
+}
+```
