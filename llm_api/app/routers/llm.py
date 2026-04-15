@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.text_message import TextInput as TextInputSchema
 from app.schemas.llm_output import LLMOutput as LLMOutputSchema
 from app.llm.chain import CHAIN_TEXT_HANDLER as LLM
@@ -12,7 +12,7 @@ router = APIRouter(
 
 @router.post('/text', response_model=LLMOutputSchema)
 async def get_response_by_text(
-    payload: TextInputSchema
+    payload: TextInputSchema = Depends(TextInputSchema.as_form)
 ):
     user_content = payload.content
     try:
