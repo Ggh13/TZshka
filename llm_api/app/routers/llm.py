@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from langchain_core.exceptions import OutputParserException
 from app.schemas.text_message import TextInput as TextInputSchema
 from app.schemas.llm_output import LLMOutput as LLMOutputSchema
 from app.llm.chain import CHAIN_TEXT_HANDLER as LLM
@@ -19,8 +20,18 @@ async def get_response_by_text(
         llm_output = LLM.invoke({
             "technical_specification": user_content
         })
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="LLM is not available")
+
+    except OutputParserException:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            detail="Invalid LLM response format")
+
+    except TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                            detail="LLM timeout")
+
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="LLM service unavailable")
 
     return llm_output
 
@@ -35,16 +46,23 @@ async def get_response_by_text_file(
             detail="File must be .txt"
         )
 
-    content = (await file.read()).decode("utf-8")
+    user_content = (await file.read()).decode("utf-8")
 
     try:
         llm_output = LLM.invoke({
-            "technical_specification": content
+            "technical_specification": user_content
         })
+
+    except OutputParserException:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            detail="Invalid LLM response format")
+
+    except TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                            detail="LLM timeout")
+
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="LLM is not available"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="LLM service unavailable")
 
     return llm_output
