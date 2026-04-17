@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { registerUser } from '../api/auth'
 import './RegisterPage.css'
 
@@ -18,6 +18,7 @@ const initialErrors = {
 }
 
 function RegisterPage() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState(initialFormData)
   const [errors, setErrors] = useState(initialErrors)
   const [serverMessage, setServerMessage] = useState('')
@@ -128,9 +129,13 @@ function RegisterPage() {
         role: 'user',
       })
 
-      setServerMessage('Registration completed successfully. Now you can sign in.')
+      setServerMessage('Registration completed successfully. Redirecting to sign in...')
       setFormData(initialFormData)
       setErrors(initialErrors)
+
+      setTimeout(() => {
+        navigate('/login')
+      }, 1500)
     } catch (error) {
       setServerMessage(`Error: ${error.message}`)
     } finally {
