@@ -63,20 +63,49 @@ function RegisterPage() {
   }
 
   function handleChange(event) {
-    const { name, value } = event.target
+  const { name, value } = event.target
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }))
-
-    setServerMessage('')
+  const nextFormData = {
+    ...formData,
+    [name]: value,
   }
+
+  const nextErrors = {
+    ...errors,
+    [name]: '',
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const trimmedEmail = nextFormData.email.trim()
+
+  if (name === 'email') {
+    if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
+      nextErrors.email = 'Enter a valid email'
+    }
+  }
+
+  if (name === 'password' || name === 'confirmPassword') {
+    if (nextFormData.password && nextFormData.password.length < 8) {
+      nextErrors.password = 'Password must be at least 8 characters'
+    } else {
+      nextErrors.password = ''
+    }
+
+    if (nextFormData.confirmPassword) {
+      if (nextFormData.confirmPassword !== nextFormData.password) {
+        nextErrors.confirmPassword = 'Passwords do not match'
+      } else {
+        nextErrors.confirmPassword = ''
+      }
+    } else {
+      nextErrors.confirmPassword = ''
+    }
+  }
+
+  setFormData(nextFormData)
+  setErrors(nextErrors)
+  setServerMessage('')
+}
 
   async function handleSubmit(event) {
     event.preventDefault()
