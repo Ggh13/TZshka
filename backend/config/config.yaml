@@ -1,13 +1,12 @@
 PORT: 8080
 REST_HOST: "0.0.0.0"
-TYPE_DB: "PSG"
 JWT_SECRET: "your-secret-key-here"
 
 POSTGRES:
-  POSTGRES_HOST: "postgres"
-  POSTGRES_PORT:  5432
-  POSTGRES_USER: "forumuser"
-  POSTGRES_PASS: "qwerty1234"
-  POSTGRES_DB: "forumdb"
-  POSTGRES_MAX_CONN: 10
-  POSTGRES_MIN_CONN: 5
+  host: "postgres"
+  port: 5432
+  username: "forumuser"
+  password: "qwerty1234"
+  database: "forumdb"
+  min_conns: 5
+  max_conns: 10
