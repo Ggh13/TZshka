@@ -72,8 +72,8 @@ POST /api/register
 Content-Type: application/json
 
 {
-  "login": "testuser",
-  "email": "user@example.com",
+  "login": "user1",
+  "email": "user1@test.com",
   "password": "password123"
 }
 ```
@@ -82,9 +82,9 @@ Content-Type: application/json
 ```json
 {
   "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "login": "testuser",
-    "email": "user@example.com"
+    "id": "uuid",
+    "login": "user1",
+    "email": "user1@test.com"
   }
 }
 ```
@@ -96,7 +96,7 @@ POST /api/login
 Content-Type: application/json
 
 {
-  "login": "testuser",
+  "login": "user1",
   "password": "password123"
 }
 ```
@@ -111,7 +111,7 @@ Content-Type: application/json
 ### Создание сессии
 
 ```bash
-POST /api/sessions
+POST /api/sessions/create
 Content-Type: application/json
 Authorization: Bearer <token>
 
@@ -124,17 +124,18 @@ Authorization: Bearer <token>
 ```json
 {
   "session": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": "uuid",
     "name": "My Session",
-    "creatorId": "00000000-0000-0000-0000-000000000002"
+    "creatorId": "uuid"
   }
 }
 ```
 
-### Получение списка сессий
+### Получение сессий пользователя
 
 ```bash
 GET /api/sessions
+Authorization: Bearer <token>
 ```
 
 **Успешный ответ (200):**
@@ -142,9 +143,9 @@ GET /api/sessions
 {
   "sessions": [
     {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "id": "uuid",
       "name": "My Session",
-      "creatorId": "00000000-0000-0000-0000-000000000002"
+      "creatorId": "uuid"
     }
   ]
 }
@@ -157,7 +158,7 @@ POST /api/sessions/join
 Content-Type: application/json
 
 {
-  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+  "sessionId": "uuid"
 }
 ```
 
@@ -165,9 +166,9 @@ Content-Type: application/json
 ```json
 {
   "session": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": "uuid",
     "name": "My Session",
-    "creatorId": "00000000-0000-0000-0000-000000000002"
+    "creatorId": "uuid"
   }
 }
 ```
@@ -180,7 +181,7 @@ Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+  "sessionId": "uuid"
 }
 ```
 
@@ -199,7 +200,7 @@ backend/
 │   └── config.yaml          # Конфигурация
 ├── docker/
 │   └── Dockerfile           # Docker образ
-├── tests/
+├─��� tests/
 │   ├── auth_test.go         # Тесты auth
 │   └── session_test.go      # Тесты session
 ├── internal/

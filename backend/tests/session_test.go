@@ -15,7 +15,7 @@ func TestCreateSession(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 
-	r.POST("/sessions", func(c *gin.Context) {
+	r.POST("/sessions/create", func(c *gin.Context) {
 		var req sessionModels.CreateSessionRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, sessionModels.ErrorResponse{
@@ -66,7 +66,7 @@ func TestCreateSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			body, _ := json.Marshal(tt.body)
-			req := httptest.NewRequest(http.MethodPost, "/sessions", bytes.NewBuffer(body))
+			req := httptest.NewRequest(http.MethodPost, "/sessions/create", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
@@ -79,11 +79,22 @@ func TestCreateSession(t *testing.T) {
 	}
 }
 
-func TestGetSessions(t *testing.T) {
+func TestGetUserSessions(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 
 	r.GET("/sessions", func(c *gin.Context) {
+		auth := c.GetHeader("Authorization")
+		if auth == "" {
+			c.JSON(http.StatusUnauthorized, sessionModels.ErrorResponse{
+				Error: struct {
+					Code    string `json:"code"`
+					Message string `json:"message"`
+				}{Code: "UNAUTHORIZED", Message: "token required"},
+			})
+			return
+		}
+
 		c.JSON(http.StatusOK, sessionModels.SessionsResponse{
 			Sessions: []sessionModels.Session{
 				{Name: "Session 1"},
@@ -92,12 +103,35 @@ func TestGetSessions(t *testing.T) {
 		})
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/sessions", nil)
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	tests := []struct {
+		name       string
+		auth       string
+		wantStatus int
+	}{
+		{
+			name:       "valid get sessions",
+			auth:       "Bearer token123",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "missing token",
+			auth:       "",
+			wantStatus: http.StatusUnauthorized,
+		},
+	}
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/sessions", nil)
+			req.Header.Set("Authorization", tt.auth)
+
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("expected status %d, got %d", tt.wantStatus, w.Code)
+			}
+		})
 	}
 }
 
