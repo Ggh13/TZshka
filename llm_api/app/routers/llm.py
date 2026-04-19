@@ -1,7 +1,11 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi.responses import JSONResponse
+
 from langchain_core.exceptions import OutputParserException
+
 from app.schemas.text_message import TextInput as TextInputSchema
-from app.schemas.llm_output import LLMOutput as LLMOutputSchema
+from app.schemas.llm import LLMOutput as LLMOutputSchema, LLMResponse as LLMResponseSchema
+from app.schemas.error import Error as ErrorSchema
 from app.llm.chain import CHAIN_TEXT_HANDLER as LLM
 
 
@@ -11,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.post('/text', response_model=LLMOutputSchema)
+@router.post('/text', response_model=LLMResponseSchema)
 async def get_response_by_text(
     payload: TextInputSchema = Depends(TextInputSchema.as_form)
 ):
@@ -21,48 +25,138 @@ async def get_response_by_text(
             "technical_specification": user_content
         })
 
-    except OutputParserException:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                            detail="Invalid LLM response format")
-
-    except TimeoutError:
-        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                            detail="LLM timeout")
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="LLM service unavailable")
-
-    return llm_output
-
-
-@router.post('/text_file')
-async def get_response_by_text_file(
-        file: UploadFile = File(...)
-):
-    if file.content_type != "text/plain":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be .txt"
+        return LLMResponseSchema(
+            success=True,
+            code=200,
+            data=llm_output,
+            error=None
         )
 
-    user_content = (await file.read()).decode("utf-8")
+    except OutputParserException:
+        return JSONResponse(
+            status_code=422,
+            content=LLMResponseSchema(
+                success=False,
+                code=422,
+                data=None,
+                error=ErrorSchema(
+                    type="invalid_llm_response",
+                    message="Invalid LLM response format"
+                )
+            ).model_dump()
+        )
+
+    except TimeoutError:
+        return JSONResponse(
+            status_code=504,
+            content=LLMResponseSchema(
+                success=False,
+                code=504,
+                data=None,
+                error=ErrorSchema(
+                    type="timeout",
+                    message="LLM timeout"
+                )
+            ).model_dump()
+        )
+
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content=LLMResponseSchema(
+                success=False,
+                code=500,
+                data=None,
+                error=ErrorSchema(
+                    type="internal_error",
+                    message="LLM service unavailable"
+                )
+            ).model_dump()
+        )
+
+
+@router.post('/text_file', response_model=LLMResponseSchema)
+async def get_response_by_text_file(file: UploadFile = File(...)):
+    if file.content_type != "text/plain":
+        return JSONResponse(
+            status_code=400,
+            content=LLMResponseSchema(
+                success=False,
+                code=400,
+                data=None,
+                error=ErrorSchema(
+                    type="invalid_file_type",
+                    message="File must be .txt"
+                )
+            ).model_dump()
+        )
+
+    try:
+        user_content = (await file.read()).decode("utf-8")
+    except UnicodeDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content=LLMResponseSchema(
+                success=False,
+                code=400,
+                data=None,
+                error=ErrorSchema(
+                    type="invalid_file_encoding",
+                    message="File must be UTF-8 encoded text"
+                )
+            ).model_dump()
+        )
 
     try:
         llm_output = LLM.invoke({
             "technical_specification": user_content
         })
 
+        return LLMResponseSchema(
+            success=True,
+            code=200,
+            data=llm_output,
+            error=None
+        )
+
     except OutputParserException:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                            detail="Invalid LLM response format")
+        return JSONResponse(
+            status_code=422,
+            content=LLMResponseSchema(
+                success=False,
+                code=422,
+                data=None,
+                error=ErrorSchema(
+                    type="invalid_llm_response",
+                    message="Invalid LLM response format"
+                )
+            ).model_dump()
+        )
 
     except TimeoutError:
-        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                            detail="LLM timeout")
+        return JSONResponse(
+            status_code=504,
+            content=LLMResponseSchema(
+                success=False,
+                code=504,
+                data=None,
+                error=ErrorSchema(
+                    type="timeout",
+                    message="LLM timeout"
+                )
+            ).model_dump()
+        )
 
     except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="LLM service unavailable")
-
-    return llm_output
+        return JSONResponse(
+            status_code=500,
+            content=LLMResponseSchema(
+                success=False,
+                code=500,
+                data=None,
+                error=ErrorSchema(
+                    type="internal_error",
+                    message="LLM service unavailable"
+                )
+            ).model_dump()
+        )

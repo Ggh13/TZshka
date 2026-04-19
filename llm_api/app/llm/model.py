@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_openrouter import ChatOpenRouter
 
-from app.schemas.llm_output import LLMOutput as LLMOutputSchema
+from app.schemas.llm import LLMOutput as LLMOutputSchema
 
 load_dotenv()
 
