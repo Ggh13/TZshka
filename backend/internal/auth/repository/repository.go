@@ -14,7 +14,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, user *authModels.User, passwordHash string) error
-	GetByEmail(ctx context.Context, email string) (*authModels.User, string, error)
+	GetByLogin(ctx context.Context, login string) (*authModels.User, string, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*authModels.User, error)
 }
 
@@ -29,13 +29,13 @@ func New(db *pgxpool.Pool, log *zap.Logger) Repository {
 
 func (r *repo) Create(ctx context.Context, user *authModels.User, passwordHash string) error {
 	query := `
-		INSERT INTO users (id, email, password_hash, role, created_at)
+		INSERT INTO users (id, login, email, password_hash, created_at)
 		VALUES ($1, $2, $3, $4, NOW())
-		ON CONFLICT (email) DO NOTHING
+		ON CONFLICT (login) DO NOTHING
 		RETURNING id`
 
 	var id uuid.UUID
-	err := r.db.QueryRow(ctx, query, user.ID, user.Email, passwordHash, user.Role).Scan(&id)
+	err := r.db.QueryRow(ctx, query, user.ID, user.Login, user.Email, passwordHash).Scan(&id)
 	if err == pgx.ErrNoRows {
 		return fmt.Errorf("user already exists")
 	}
@@ -45,45 +45,45 @@ func (r *repo) Create(ctx context.Context, user *authModels.User, passwordHash s
 	}
 
 	user.ID = id
-	r.log.Info("user created", zap.String("email", user.Email), zap.String("role", user.Role))
+	r.log.Info("user created", zap.String("login", user.Login), zap.String("email", user.Email))
 	return nil
 }
 
-func (r *repo) GetByEmail(ctx context.Context, email string) (*authModels.User, string, error) {
-	query := `SELECT id, email, password_hash, role, created_at FROM users WHERE email = $1`
+func (r *repo) GetByLogin(ctx context.Context, login string) (*authModels.User, string, error) {
+	query := `SELECT id, login, email, password_hash, created_at FROM users WHERE login = $1`
 
 	var user authModels.User
 	var passwordHash string
 	var createdAt interface{}
 
-	err := r.db.QueryRow(ctx, query, email).Scan(
+	err := r.db.QueryRow(ctx, query, login).Scan(
 		&user.ID,
+		&user.Login,
 		&user.Email,
 		&passwordHash,
-		&user.Role,
 		&createdAt,
 	)
 	if err == pgx.ErrNoRows {
 		return nil, "", fmt.Errorf("user not found")
 	}
 	if err != nil {
-		r.log.Error("failed to get user by email", zap.Error(err))
-		return nil, "", fmt.Errorf("authRepo.GetByEmail: failed to get user: %w", err)
+		r.log.Error("failed to get user by login", zap.Error(err))
+		return nil, "", fmt.Errorf("authRepo.GetByLogin: failed to get user: %w", err)
 	}
 
 	return &user, passwordHash, nil
 }
 
 func (r *repo) GetByID(ctx context.Context, id uuid.UUID) (*authModels.User, error) {
-	query := `SELECT id, email, role, created_at FROM users WHERE id = $1`
+	query := `SELECT id, login, email, created_at FROM users WHERE id = $1`
 
 	var user authModels.User
 	var createdAt interface{}
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
+		&user.Login,
 		&user.Email,
-		&user.Role,
 		&createdAt,
 	)
 	if err == pgx.ErrNoRows {

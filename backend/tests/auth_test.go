@@ -27,6 +27,16 @@ func TestRegister(t *testing.T) {
 			return
 		}
 
+		if req.Login == "" {
+			c.JSON(http.StatusBadRequest, authModels.ErrorResponse{
+				Error: struct {
+					Code    string `json:"code"`
+					Message string `json:"message"`
+				}{Code: "INVALID_REQUEST", Message: "login is required"},
+			})
+			return
+		}
+
 		if req.Email == "" {
 			c.JSON(http.StatusBadRequest, authModels.ErrorResponse{
 				Error: struct {
@@ -47,20 +57,10 @@ func TestRegister(t *testing.T) {
 			return
 		}
 
-		if req.Role != "admin" && req.Role != "user" {
-			c.JSON(http.StatusBadRequest, authModels.ErrorResponse{
-				Error: struct {
-					Code    string `json:"code"`
-					Message string `json:"message"`
-				}{Code: "INVALID_REQUEST", Message: "invalid role"},
-			})
-			return
-		}
-
 		c.JSON(http.StatusCreated, authModels.UserResponse{
 			User: authModels.User{
+				Login: req.Login,
 				Email: req.Email,
-				Role:  req.Role,
 			},
 		})
 	})
@@ -73,34 +73,33 @@ func TestRegister(t *testing.T) {
 		{
 			name: "valid register",
 			body: map[string]string{
+				"login":    "testuser",
 				"email":    "test@example.com",
 				"password": "password123",
-				"role":     "user",
 			},
 			wantStatus: http.StatusCreated,
 		},
 		{
+			name: "missing login",
+			body: map[string]string{
+				"email":    "test@example.com",
+				"password": "password123",
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
 			name: "missing email",
 			body: map[string]string{
+				"login":    "testuser",
 				"password": "password123",
-				"role":     "user",
 			},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name: "missing password",
 			body: map[string]string{
+				"login": "testuser",
 				"email": "test@example.com",
-				"role":  "user",
-			},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "invalid role",
-			body: map[string]string{
-				"email":    "test@example.com",
-				"password": "password123",
-				"role":     "guest",
 			},
 			wantStatus: http.StatusBadRequest,
 		},
@@ -138,12 +137,12 @@ func TestLogin(t *testing.T) {
 			return
 		}
 
-		if req.Email == "" {
+		if req.Login == "" {
 			c.JSON(http.StatusBadRequest, authModels.ErrorResponse{
 				Error: struct {
 					Code    string `json:"code"`
 					Message string `json:"message"`
-				}{Code: "INVALID_REQUEST", Message: "email is required"},
+				}{Code: "INVALID_REQUEST", Message: "login is required"},
 			})
 			return
 		}
@@ -158,7 +157,7 @@ func TestLogin(t *testing.T) {
 			return
 		}
 
-		if req.Email == "test@example.com" && req.Password == "password123" {
+		if req.Login == "testuser" && req.Password == "password123" {
 			c.JSON(http.StatusOK, authModels.TokenResponse{
 				Token: "valid-token",
 			})
@@ -181,13 +180,13 @@ func TestLogin(t *testing.T) {
 		{
 			name: "valid login",
 			body: map[string]string{
-				"email":    "test@example.com",
+				"login":    "testuser",
 				"password": "password123",
 			},
 			wantStatus: http.StatusOK,
 		},
 		{
-			name: "missing email",
+			name: "missing login",
 			body: map[string]string{
 				"password": "password123",
 			},
@@ -196,14 +195,14 @@ func TestLogin(t *testing.T) {
 		{
 			name: "missing password",
 			body: map[string]string{
-				"email": "test@example.com",
+				"login": "testuser",
 			},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name: "invalid credentials",
 			body: map[string]string{
-				"email":    "wrong@example.com",
+				"login":    "wronguser",
 				"password": "wrongpassword",
 			},
 			wantStatus: http.StatusUnauthorized,
