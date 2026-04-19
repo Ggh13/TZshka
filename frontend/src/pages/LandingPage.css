@@ -1,0 +1,163 @@
+.landing-page {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  padding: 20px 32px 40px;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  min-height: 50px;
+}
+
+.landing-header-link {
+  font-size: 20px;
+  line-height: 1;
+  color: #fff;
+  text-decoration: none;
+}
+
+.landing-header-link:hover {
+  opacity: 0.8;
+}
+
+.landing-header-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #d9d9d9;
+  flex-shrink: 0;
+}
+
+.landing-main {
+  min-height: calc(100vh - 90px);
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 541px);
+  align-items: center;
+  gap: 64px;
+}
+
+.landing-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.landing-title {
+  margin: 0;
+  font-size: clamp(56px, 8vw, 96px);
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.landing-buttons {
+  margin-top: 32px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.landing-button {
+  min-width: 140px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.landing-button:hover {
+  transform: translateY(-1px);
+}
+
+.landing-button--primary {
+  background: #fff;
+  color: #111;
+}
+
+.landing-button--secondary {
+  border: 1px solid #3a3a3a;
+  color: #fff;
+  background: transparent;
+}
+
+.landing-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-image {
+  width: min(100%, 541px);
+  height: auto;
+  display: block;
+  border-radius: 20px;
+}
+
+@media (max-width: 900px) {
+  .landing-page {
+    padding: 20px 20px 32px;
+  }
+
+  .landing-header-actions {
+    gap: 20px;
+  }
+
+  .landing-main {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    justify-items: center;
+    text-align: center;
+    padding-top: 40px;
+  }
+
+  .landing-content {
+    align-items: center;
+  }
+
+  .landing-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .landing-header-actions {
+    gap: 14px;
+  }
+
+  .landing-header-link {
+    font-size: 16px;
+  }
+
+  .landing-header-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .landing-button {
+    width: 100%;
+  }
+
+  .landing-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+}
