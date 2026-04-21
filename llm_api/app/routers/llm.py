@@ -27,17 +27,17 @@ async def get_response_by_text(
 
         return LLMResponseSchema(
             success=True,
-            code=200,
+            code=status.HTTP_200_OK,
             data=llm_output,
             error=None
         )
 
     except OutputParserException:
         return JSONResponse(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=LLMResponseSchema(
                 success=False,
-                code=422,
+                code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 data=None,
                 error=ErrorSchema(
                     type="invalid_llm_response",
@@ -48,10 +48,10 @@ async def get_response_by_text(
 
     except TimeoutError:
         return JSONResponse(
-            status_code=504,
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             content=LLMResponseSchema(
                 success=False,
-                code=504,
+                code=status.HTTP_504_GATEWAY_TIMEOUT,
                 data=None,
                 error=ErrorSchema(
                     type="timeout",
@@ -62,10 +62,10 @@ async def get_response_by_text(
 
     except Exception:
         return JSONResponse(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=LLMResponseSchema(
                 success=False,
-                code=500,
+                code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 data=None,
                 error=ErrorSchema(
                     type="internal_error",
@@ -79,10 +79,10 @@ async def get_response_by_text(
 async def get_response_by_text_file(file: UploadFile = File(...)):
     if file.content_type != "text/plain":
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content=LLMResponseSchema(
                 success=False,
-                code=400,
+                code=status.HTTP_400_BAD_REQUEST,
                 data=None,
                 error=ErrorSchema(
                     type="invalid_file_type",
@@ -95,10 +95,10 @@ async def get_response_by_text_file(file: UploadFile = File(...)):
         user_content = (await file.read()).decode("utf-8")
     except UnicodeDecodeError:
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content=LLMResponseSchema(
                 success=False,
-                code=400,
+                code=status.HTTP_400_BAD_REQUEST,
                 data=None,
                 error=ErrorSchema(
                     type="invalid_file_encoding",
@@ -114,17 +114,17 @@ async def get_response_by_text_file(file: UploadFile = File(...)):
 
         return LLMResponseSchema(
             success=True,
-            code=200,
+            code=status.HTTP_200_OK,
             data=llm_output,
             error=None
         )
 
     except OutputParserException:
         return JSONResponse(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=LLMResponseSchema(
                 success=False,
-                code=422,
+                code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 data=None,
                 error=ErrorSchema(
                     type="invalid_llm_response",
@@ -135,10 +135,10 @@ async def get_response_by_text_file(file: UploadFile = File(...)):
 
     except TimeoutError:
         return JSONResponse(
-            status_code=504,
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             content=LLMResponseSchema(
                 success=False,
-                code=504,
+                code=status.HTTP_504_GATEWAY_TIMEOUT,
                 data=None,
                 error=ErrorSchema(
                     type="timeout",
@@ -149,10 +149,10 @@ async def get_response_by_text_file(file: UploadFile = File(...)):
 
     except Exception:
         return JSONResponse(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=LLMResponseSchema(
                 success=False,
-                code=500,
+                code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 data=None,
                 error=ErrorSchema(
                     type="internal_error",
