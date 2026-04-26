@@ -34,7 +34,6 @@ async def get_response_by_text(
 
     except OutputParserException:
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=LLMResponseSchema(
                 success=False,
                 code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -48,7 +47,6 @@ async def get_response_by_text(
 
     except TimeoutError:
         return JSONResponse(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             content=LLMResponseSchema(
                 success=False,
                 code=status.HTTP_504_GATEWAY_TIMEOUT,
@@ -62,7 +60,6 @@ async def get_response_by_text(
 
     except Exception:
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=LLMResponseSchema(
                 success=False,
                 code=status.HTTP_500_INTERNAL_SERVER_ERROR,
