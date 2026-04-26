@@ -8,11 +8,19 @@ from app.llm.model import llm
 from pathlib import Path
 
 rules_path = Path(__file__).parent.parent / 'static_files' / 'rules.txt'
+gost_19_path = Path(__file__).parent.parent / 'static_files' / 'GOST-19.txt'
+gost_34_path = Path(__file__).parent.parent / 'static_files' / 'GOST-34.txt'
 
 with open(rules_path, 'r', encoding='utf-8') as file:
     rules = file.read()
 
-sp = f"""
+with open(gost_19_path, 'r', encoding='utf-8') as file:
+    gost_19 = file.read()
+
+with open(gost_34_path, 'r', encoding='utf-8') as file:
+    gost_34 = file.read()
+
+sp_text_handler = f"""
 Ты — экспертный ИИ-ассистент по проверке качества технических заданий (ТЗ).
 
 Твоя задача:
@@ -67,7 +75,7 @@ sp = f"""
 Не добавляй markdown, пояснения, вступление, заключение или любой текст вне полей структуры.
 """
 
-system_prompt = SystemMessagePromptTemplate.from_template(sp)
+system_prompt = SystemMessagePromptTemplate.from_template(sp_text_handler)
 
 user_prompt = HumanMessagePromptTemplate.from_template(
     """
@@ -93,3 +101,8 @@ CHAIN_TEXT_HANDLER = (
         "feedback": lambda x: x.feedback
     }
 )
+
+
+sp_standard_handler = f"""
+
+"""

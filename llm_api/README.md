@@ -13,10 +13,14 @@
 **Request:**
 ```json
 {
-  "content": "some_text"
+  "mode": "Instant" | "Thinking",
+  "standard": "ГОСТ-19" | "ГОСТ-34" | null,
+  "text": "some_text"
 }
 ```
-- `content` - текст технического задания.
+- `mode` - режим раздумья,
+- `standard` - стандарт написания ТЗ,
+- `text` - текст технического задания.
 
 **Response**
 
