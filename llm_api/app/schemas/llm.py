@@ -13,15 +13,24 @@ class LLMOutput(BaseModel):
     issues: list[Issue] = Field(default_factory=list, description="Список найденных нарушений")
     feedback: str = Field(..., description="Объективная и справедливая оценка технического задания")
 
+class LLMCombinedOutput(BaseModel):
+    rules_checker: LLMOutput
+    standard_checker: LLMOutput | None = None
 
 class LLMResponse(BaseModel):
     success: bool = Field(..., description="Успех/не успех запроса")
     code: int = Field(..., description="HTTP status code")
-    data: LLMOutput | None = Field(
-        default=None,
-        description="Полезные данные при успешном ответе"
-    )
-    error: ErrorSchema | None = Field(
-        default=None,
-        description="Информация об ошибке"
-    )
+    data: LLMCombinedOutput | None = Field(default=None, description="Полезные данные при успешном ответе")
+    error: ErrorSchema | None = Field(default=None, description="Информация об ошибке")
+
+# class LLMResponse(BaseModel):
+#     success: bool = Field(..., description="Успех/не успех запроса")
+#     code: int = Field(..., description="HTTP status code")
+#     data: LLMOutput | None = Field(
+#         default=None,
+#         description="Полезные данные при успешном ответе"
+#     )
+#     error: ErrorSchema | None = Field(
+#         default=None,
+#         description="Информация об ошибке"
+#     )

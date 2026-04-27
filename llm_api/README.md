@@ -29,20 +29,30 @@
   "success": true,
   "code": 200,
   "data": {
-    "status": "valid",
-    "issues": [
+    "rules_checker": {
+      "status": "valid",
+      "issues": [
         {
-            "rule_id": "...",
-            "problem": "...",
-            "explanation": "..."
-        },
-    ],
-    "feedback": "..."
-  } | null,
-  "error": {
-            "type": "...",
-            "message": "..."
-  } | null
+          "rule_id": "...",
+          "problem": "...",
+          "explanation": "..."
+        }
+      ],
+      "feedback": "..."
+    },
+    "standard_checker": {
+      "status": "issues_found",
+      "issues": [
+        {
+          "rule_id": "...",
+          "problem": "...",
+          "explanation": "..."
+        }
+      ],
+      "feedback": "..."
+    }
+  },
+  "error": null
 }
 ```
 - **success** — `boolean`  
@@ -56,30 +66,40 @@
 - **data** — `object | null`  
   Полезные данные ответа. Присутствует только при `success = true`.
 
-  **Поля объекта `data`:**
+  - **rules_checker** — `object`
+  
+    Результат базовой проверки ТЗ
+  
+    - **status** — `string`  
+  Результат проверки технического задания.  
+  Возможные значения:  
+      - `valid` — нарушений не найдено  
+      - `issues_found` — обнаружены проблемы.
+    
+    - **issues** — `array<object>`  
+  Список найденных проблем. Пустой массив, если нарушений нет.
 
-  - **status** — `string`  
-    Результат проверки технического задания.  
-    Возможные значения:  
-    - `valid` — нарушений не найдено  
-    - `issues_found` — обнаружены проблемы.
+      **Поля элемента массива:**
 
-  - **issues** — `array<object>`  
-    Список найденных проблем. Пустой массив, если нарушений нет.
+      - **rule_id** — `string`  
+        Идентификатор правила, которое было нарушено.
 
-    **Поля элемента массива:**
+      - **problem** — `string`  
+        Название нарушенного правила.
 
-    - **rule_id** — `string`  
-      Идентификатор правила, которое было нарушено.
-
-    - **problem** — `string`  
-      Название нарушенного правила.
-
-    - **explanation** — `string`  
-      Подробное объяснение причины проблемы.
-
-  - **feedback** — `string`  
+      - **explanation** — `string`  
+        Подробное объяснение причины проблемы.
+  
+    - **feedback** — `string`  
     Общая объективная оценка технического задания, сгенерированная LLM.
+
+  - **standard_checker** - `object | null`  
+    
+    Результат проверки по стандарту (ГОСТ и т.д.)
+
+    - `null` - если стандарт не передан
+    - иначе структура аналогична `rules_checker`
+
 
 - **error** — `object | null`
     
