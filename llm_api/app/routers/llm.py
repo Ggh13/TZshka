@@ -1,10 +1,9 @@
-from fastapi import APIRouter, status, Body
+from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
 from langchain_core.exceptions import OutputParserException
 from pydantic import ValidationError
 
-from app.schemas.text_message import TextInput as TextInputSchema
 from app.schemas.llm import LLMResponse as LLMResponseSchema, LLMCombinedOutput as LLMCombinedOutputSchema
 from app.schemas.error import Error as ErrorSchema
 
@@ -20,12 +19,25 @@ router = APIRouter(
 
 @router.post('/text', response_model=LLMResponseSchema)
 async def get_response_by_text(
-    mode: str = Body(...),
-    standard: str = Body(None),
-    content: str = Body(...),
+    mode: str = "Instant",
+    standard: str = None,
+    content: str = "",
 ):
     user_content = content
     try:
+        if RULES_CHECKER is None:
+            return JSONResponse(
+                content=LLMResponseSchema(
+                    success=False,
+                    code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    data=None,
+                    error=ErrorSchema(
+                        type="service_unavailable",
+                        message="LLM not configured"
+                    )
+                ).model_dump()
+            )
+
         rules_output = RULES_CHECKER.invoke({
             "technical_specification": user_content
         })
@@ -87,7 +99,8 @@ async def get_response_by_text(
             ).model_dump()
         )
 
-    except Exception:
+    except Exception as e:
+        import traceback
         return JSONResponse(
             content=LLMResponseSchema(
                 success=False,
@@ -95,7 +108,7 @@ async def get_response_by_text(
                 data=None,
                 error=ErrorSchema(
                     type="internal_error",
-                    message="LLM service unavailable"
+                    message=f"LLM service unavailable: {str(e)}"
                 )
             ).model_dump()
         )

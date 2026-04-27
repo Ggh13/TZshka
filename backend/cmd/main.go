@@ -15,6 +15,9 @@ import (
 	authRoute "TZshka/internal/auth/route"
 	authService "TZshka/internal/auth/service"
 	"TZshka/internal/config"
+	historyRepo "TZshka/internal/history/repository"
+	historyRoute "TZshka/internal/history/route"
+	historyService "TZshka/internal/history/service"
 	llmRoute "TZshka/internal/llm/route"
 	llmService "TZshka/internal/llm/service"
 	"TZshka/internal/migrations"
@@ -67,7 +70,12 @@ func main() {
 
 	httpClient := &http.Client{}
 	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
-	llmHandler := llmRoute.New(llmSvc, zapLog)
+
+	historyRepoInstance := historyRepo.New(pgDB)
+	historySvc := historyService.New(historyRepoInstance, zapLog)
+	historyHandler := historyRoute.New(historySvc, zapLog)
+
+	llmHandler := llmRoute.New(llmSvc, historySvc, zapLog)
 
 	r := gin.Default()
 	r.Use(corsMiddleware())
@@ -75,6 +83,7 @@ func main() {
 	authHandler.RegisterRoutes(r)
 	sessionHandler.RegisterRoutes(r)
 	llmHandler.RegisterRoutes(r)
+	historyHandler.RegisterRoutes(r)
 
 	zapLog.Info("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {
