@@ -17,6 +17,15 @@ services:
       timeout: 5s
       retries: 5
 
+  llm_api:
+    build:
+      context: ./llm_api
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+
   app:
     build:
       context: ./backend
@@ -26,10 +35,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      llm_api:
+        condition: service_started
     environment:
       - PORT=8080
       - REST_HOST=0.0.0.0
       - JWT_SECRET=your-secret-key-here
+      - LLM_API_URL=http://llm_api:8001
     volumes:
       - ./backend/config:/app/config
 

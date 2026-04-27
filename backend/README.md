@@ -1,6 +1,6 @@
 # TZshka
 
-Backend проект с авторизацией, регистрацией и управлением сессиями.
+Backend проект с авторизацией, регистрацией, управлением сессиями и LLM интеграцией.
 
 ## Технологии
 
@@ -12,15 +12,7 @@ Backend проект с авторизацией, регистрацией и у
 
 ## Запуск
 
-### Локально
-
-```bash
-cd backend
-go build -o app.exe ./cmd/main.go
-./app.exe
-```
-
-### Docker
+### Docker (рекомендуется)
 
 ```bash
 # Первый запуск или сброс данных
@@ -65,7 +57,9 @@ go test -v ./tests/...
 
 ## API
 
-### Регистрация
+### Auth
+
+#### Регистрация
 
 ```bash
 POST /api/register
@@ -78,18 +72,12 @@ Content-Type: application/json
 }
 ```
 
-**Успешный ответ (201):**
+**Ответ (201):**
 ```json
-{
-  "user": {
-    "id": "uuid",
-    "login": "user1",
-    "email": "user1@test.com"
-  }
-}
+{"user": {"id": "uuid", "login": "user1", "email": "user1@test.com"}}
 ```
 
-### Вход
+#### Вход
 
 ```bash
 POST /api/login
@@ -101,126 +89,120 @@ Content-Type: application/json
 }
 ```
 
-**Успешный ответ (200):**
+**Ответ (200):**
 ```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
 ```
 
-### Создание сессии
+---
+
+### Session
+
+#### Создание сессии
 
 ```bash
 POST /api/sessions/create
-Content-Type: application/json
 Authorization: Bearer <token>
+Content-Type: application/json
 
-{
-  "name": "My Session"
-}
+{"name": "My Session"}
 ```
 
-**Успешный ответ (201):**
+**Ответ (201):**
 ```json
-{
-  "session": {
-    "id": "uuid",
-    "name": "My Session",
-    "creatorId": "uuid"
-  }
-}
+{"session": {"id": "uuid", "name": "My Session", "creatorId": "uuid"}}
 ```
 
-### Получение сессий пользователя
+#### Получение сессий пользователя
 
 ```bash
 GET /api/sessions
 Authorization: Bearer <token>
 ```
 
-**Успешный ответ (200):**
+**Ответ (200):**
 ```json
-{
-  "sessions": [
-    {
-      "id": "uuid",
-      "name": "My Session",
-      "creatorId": "uuid"
-    }
-  ]
-}
+{"sessions": [{"id": "uuid", "name": "My Session", "creatorId": "uuid"}]}
 ```
 
-### Вход в сессию
+#### Вход в сессию
 
 ```bash
 POST /api/sessions/join
 Content-Type: application/json
 
-{
-  "sessionId": "uuid"
-}
+{"sessionId": "uuid"}
 ```
 
-**Успешный ответ (200):**
-```json
-{
-  "session": {
-    "id": "uuid",
-    "name": "My Session",
-    "creatorId": "uuid"
-  }
-}
-```
-
-### Удаление сессии
+#### Удаление сессии
 
 ```bash
 DELETE /api/sessions
 Authorization: Bearer <token>
 Content-Type: application/json
 
+{"sessionId": "uuid"}
+```
+
+---
+
+### LLM
+
+#### Обработка текста (JSON)
+
+```bash
+POST /api/llm/text
+Content-Type: application/json
+
 {
-  "sessionId": "uuid"
+  "mode": "Instant",       # или "Thinking"
+  "standard": "ГОСТ-19",  # или "ГОСТ-34", или пусто
+  "content": "Текст технического задания"
 }
 ```
 
-**Успешный ответ (200):**
+**Ответ (200):**
 ```json
-{}
+{
+  "success": true,
+  "code": 200,
+  "data": {
+    "rules_checker": "AI вывод",
+    "standard_checker": "AI вывод по стандарту"
+  }
+}
+```
+
+#### Обработка файла
+
+```bash
+POST /api/llm/file
+Content-Type: multipart/form-data
+
+# Поля формы:
+# - mode: "Instant" или "Thinking"
+# - standard: "ГОСТ-19", "ГОСТ-34" или пусто
+# - file: текстовый файл (.txt)
 ```
 
 ## Структура проекта
 
 ```
 backend/
-├── cmd/
-│   └── main.go              # Точка входа
-├── config/
-│   └── config.yaml          # Конфигурация
-├── docker/
-│   └── Dockerfile           # Docker образ
-├─��� tests/
-│   ├── auth_test.go         # Тесты auth
-│   └── session_test.go      # Тесты session
+├── cmd/main.go
+├── config/config.yaml
+├── docker/Dockerfile
+├── tests/auth_test.go
 ├── internal/
 │   ├── auth/
-│   │   ├── domain/          # Доменные модели
-│   │   ├── models/          # DTO
-│   │   ├── repository/      # Работа с БД
-│   │   ├── route/           # HTTP хендлеры
-│   │   └── service/         # Бизнес-логика
 │   ├── session/
-│   │   ├── models/          # DTO
-│   │   ├── repository/     # Работа с БД
-│   │   ├── route/           # HTTP хендлеры
-│   │   └── service/        # Бизнес-логика
-│   ├── config/             # Загрузка конфига
-│   └── migrations/         # Миграции БД
+│   ├── llm/
+│   ├── config/
+│   └── migrations/
 ├── pkg/
-│   ├── logger/            # Логгер
-│   ├── postgres/          # Подключение к PostgreSQL
-│   └── registr/           # JWT токены
+│   ├── logger/
+│   ├── postgres/
+│   └── registr/
 ├── go.mod
 └── README.md
 ```
