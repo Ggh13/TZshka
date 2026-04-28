@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	ErrInvalidRole  = errors.New("invalid role: must be 'admin' or 'user'")
 	ErrUserExists   = errors.New("user already exists")
 	ErrInvalidCreds = errors.New("invalid credentials")
 )
@@ -34,13 +33,8 @@ func New(repo authRepo.Repository, secret string, log *zap.Logger) *Service {
 	}
 }
 
-func (s *Service) Register(ctx context.Context, email, password, role string) (*authModels.User, error) {
-	s.log.Info("registering user", zap.String("email", email), zap.String("role", role))
-
-	if role != "admin" && role != "user" {
-		s.log.Error("invalid role", zap.String("role", role))
-		return nil, ErrInvalidRole
-	}
+func (s *Service) Register(ctx context.Context, login, email, password string) (*authModels.User, error) {
+	s.log.Info("registering user", zap.String("login", login), zap.String("email", email))
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -50,8 +44,8 @@ func (s *Service) Register(ctx context.Context, email, password, role string) (*
 
 	user := &authModels.User{
 		ID:    uuid.New(),
+		Login: login,
 		Email: email,
-		Role:  role,
 	}
 
 	if err := s.repo.Create(ctx, user, string(hash)); err != nil {
@@ -66,10 +60,10 @@ func (s *Service) Register(ctx context.Context, email, password, role string) (*
 	return user, nil
 }
 
-func (s *Service) Login(ctx context.Context, email, password string) (*authModels.User, string, error) {
-	s.log.Info("logging in user", zap.String("email", email))
+func (s *Service) Login(ctx context.Context, login, password string) (*authModels.User, string, error) {
+	s.log.Info("logging in user", zap.String("login", login))
 
-	user, passwordHash, err := s.repo.GetByEmail(ctx, email)
+	user, passwordHash, err := s.repo.GetByLogin(ctx, login)
 	if err != nil {
 		s.log.Error("user not found", zap.Error(err))
 		return nil, "", ErrInvalidCreds
@@ -80,7 +74,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (*authModel
 		return nil, "", ErrInvalidCreds
 	}
 
-	token, err := s.tokenService.GenerateToken(ctx, user.Role)
+	token, err := s.tokenService.GenerateToken(ctx, registr.RoleUser)
 	if err != nil {
 		s.log.Error("failed to generate token", zap.Error(err))
 		return nil, "", fmt.Errorf("authService.Login: failed to sign token: %w", err)
