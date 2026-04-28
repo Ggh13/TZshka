@@ -8,19 +8,19 @@ import (
 
 type User struct {
 	ID        uuid.UUID  `json:"id"`
+	Login     string     `json:"login"`
 	Email     string     `json:"email"`
-	Role      string     `json:"role"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 type RegisterRequest struct {
+	Login    string `json:"login" binding:"required,min=3"`
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
-	Role     string `json:"role" binding:"required,oneof=admin user"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 

@@ -1,7 +1,7 @@
 PORT: 8080
 REST_HOST: "0.0.0.0"
-TYPE_DB: "PSG"
 JWT_SECRET: "your-secret-key-here"
+LLM_API_URL: "http://llm_api:8001"
 
 POSTGRES:
   host: "postgres"
@@ -9,5 +9,7 @@ POSTGRES:
   username: "forumuser"
   password: "qwerty1234"
   database: "forumdb"
-  max_conns: 10
   min_conns: 5
+  max_conns: 10
+
+

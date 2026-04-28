@@ -36,16 +36,16 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	h.log.Info("registering user", zap.String("email", req.Email), zap.String("role", req.Role))
+	h.log.Info("registering user", zap.String("login", req.Login), zap.String("email", req.Email))
 
-	user, err := h.service.Register(c.Request.Context(), req.Email, req.Password, req.Role)
+	user, err := h.service.Register(c.Request.Context(), req.Login, req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, authService.ErrUserExists) {
 			c.JSON(http.StatusBadRequest, authModels.ErrorResponse{
 				Error: struct {
 					Code    string `json:"code"`
 					Message string `json:"message"`
-				}{Code: "INVALID_REQUEST", Message: "email already exists"},
+				}{Code: "INVALID_REQUEST", Message: "login already exists"},
 			})
 			return
 		}
@@ -76,9 +76,9 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	h.log.Info("logging in user", zap.String("email", req.Email))
+	h.log.Info("logging in user", zap.String("login", req.Login))
 
-	user, token, err := h.service.Login(c.Request.Context(), req.Email, req.Password)
+	user, token, err := h.service.Login(c.Request.Context(), req.Login, req.Password)
 	if err != nil {
 		if errors.Is(err, authService.ErrInvalidCreds) {
 			c.JSON(http.StatusUnauthorized, authModels.ErrorResponse{
