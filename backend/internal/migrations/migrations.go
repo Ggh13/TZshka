@@ -42,21 +42,6 @@ var migrations = []Migration{
 			return err
 		},
 	},
-	{
-		Name: "003_create_corrections_history",
-		Up: func(ctx context.Context, tx *pgxpool.Pool) error {
-			query := `
-			CREATE TABLE IF NOT EXISTS corrections_history (
-				id UUID PRIMARY KEY,
-				session_id UUID NOT NULL,
-				input_content TEXT NOT NULL,
-				response_data JSONB NOT NULL,
-				created_at TIMESTAMP DEFAULT NOW()
-			);`
-			_, err := tx.Exec(ctx, query)
-			return err
-		},
-	},
 }
 
 func Run(ctx context.Context, pool *pgxpool.Pool) error {

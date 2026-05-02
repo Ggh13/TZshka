@@ -55,16 +55,6 @@ go test -v ./tests/...
 | CreatorID | UUID | ID создателя |
 | CreatedAt | timestamp | Дата создания |
 
-### CorrectionsHistory
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| ID | UUID | Уникальный идентификатор |
-| SessionID | UUID | ID сессии |
-| InputContent | text | Входной текст |
-| ResponseData | JSONB | Ответ от LLM |
-| CreatedAt | timestamp | Дата создания
-
 ## API
 
 ### Auth
@@ -167,8 +157,7 @@ Content-Type: application/json
 {
   "mode": "Instant",       # или "Thinking"
   "standard": "ГОСТ-19",  # или "ГОСТ-34", или пусто
-  "content": "Текст технического задания",
-  "sessionId": "uuid"     # опционально, для сохранения в историю
+  "content": "Текст технического задания"
 }
 ```
 
@@ -194,32 +183,6 @@ Content-Type: multipart/form-data
 # - mode: "Instant" или "Thinking"
 # - standard: "ГОСТ-19", "ГОСТ-34" или пусто
 # - file: текстовый файл (.txt)
-# - sessionId: UUID сессии (опционально)
-```
-
----
-
-### History
-
-#### Получение истории сессии
-
-```bash
-GET /api/history/:id
-```
-
-**Ответ (200):**
-```json
-{
-  "corrections": [
-    {
-      "id": "uuid",
-      "sessionId": "uuid",
-      "inputContent": "Текст ТЗ",
-      "responseData": {...},
-      "createdAt": "2026-04-27T12:00:00Z"
-    }
-  ]
-}
 ```
 
 ## Структура проекта
@@ -229,14 +192,11 @@ backend/
 ├── cmd/main.go
 ├── config/config.yaml
 ├── docker/Dockerfile
-├── tests/
-│   ├── auth_test.go
-│   └── history_test.go
+├── tests/auth_test.go
 ├── internal/
 │   ├── auth/
 │   ├── session/
 │   ├── llm/
-│   ├── history/
 │   ├── config/
 │   └── migrations/
 ├── pkg/

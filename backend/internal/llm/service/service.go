@@ -32,14 +32,14 @@ type LLMRequest struct {
 }
 
 type LLMResponse struct {
-	Success bool        `json:"success"`
-	Code    int         `json:"code"`
-	Data    interface{} `json:"data"`
-	Error   interface{} `json:"error"`
+	Success bool `json:"success"`
+	Code    int  `json:"code"`
+	Data    any  `json:"data"`
+	Error   any  `json:"error"`
 }
 
-func (s *Service) ProcessText(ctx context.Context, mode, standard, content, sessionID string) (*LLMResponse, error) {
-	s.log.Info("processing text", zap.String("mode", mode), zap.String("standard", standard), zap.String("session_id", sessionID))
+func (s *Service) ProcessText(ctx context.Context, mode, standard, content string) (*LLMResponse, error) {
+	s.log.Info("processing text", zap.String("mode", mode), zap.String("standard", standard))
 
 	reqBody := LLMRequest{
 		Mode:     mode,
