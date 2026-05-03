@@ -9,7 +9,26 @@ function getAuthHeaders(extraHeaders = {}) {
   }
 }
 
-export async function sendTextToLLM({ mode, standard, content }) {
+async function parseJson(response) {
+  const text = await response.text()
+
+  if (!text) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error('Invalid server response')
+  }
+}
+
+export async function sendTextToLLM({
+  mode,
+  standard,
+  content,
+  sessionId,
+}) {
   const payload = {
     mode,
     content,
@@ -17,6 +36,10 @@ export async function sendTextToLLM({ mode, standard, content }) {
 
   if (standard) {
     payload.standard = standard
+  }
+
+  if (sessionId) {
+    payload.sessionId = sessionId
   }
 
   const response = await fetch(`${BASE_URL}/api/llm/text`, {
@@ -27,7 +50,7 @@ export async function sendTextToLLM({ mode, standard, content }) {
     body: JSON.stringify(payload),
   })
 
-  const result = await response.json()
+  const result = await parseJson(response)
 
   if (!response.ok || result.success === false) {
     throw new Error(result.error?.message || 'Text processing failed')
@@ -36,7 +59,12 @@ export async function sendTextToLLM({ mode, standard, content }) {
   return result
 }
 
-export async function sendFileToLLM({ mode, standard, file }) {
+export async function sendFileToLLM({
+  mode,
+  standard,
+  file,
+  sessionId,
+}) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('mode', mode)
@@ -45,13 +73,17 @@ export async function sendFileToLLM({ mode, standard, file }) {
     formData.append('standard', standard)
   }
 
+  if (sessionId) {
+    formData.append('sessionId', sessionId)
+  }
+
   const response = await fetch(`${BASE_URL}/api/llm/file`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: formData,
   })
 
-  const result = await response.json()
+  const result = await parseJson(response)
 
   if (!response.ok || result.success === false) {
     throw new Error(result.error?.message || 'File processing failed')
