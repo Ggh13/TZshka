@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { loginUser } from '../api/auth'
+import authVisual from '../assets/auth-visual.png'
 import './LoginPage.css'
 
 const initialFormData = {
@@ -210,9 +211,7 @@ function LoginPage() {
 
         <div className="login-visual-side" aria-hidden="true">
           <div className="login-visual-card">
-            <span className="login-visual-glow login-visual-glow--top" />
-            <span className="login-visual-glow login-visual-glow--center" />
-            <span className="login-visual-glow login-visual-glow--bottom" />
+            <img className="login-visual-image" src={authVisual} alt="" />
           </div>
         </div>
       </div>

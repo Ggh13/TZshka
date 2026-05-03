@@ -249,48 +249,18 @@
 }
 
 .login-visual-card {
-  position: relative;
   width: 561px;
-  height: min(772px, 100%);
+  height: 772px;
   border-radius: 30px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 30% 18%, rgba(123, 103, 255, 0.9), transparent 24%),
-    radial-gradient(circle at 70% 62%, rgba(130, 122, 255, 0.85), transparent 22%),
-    radial-gradient(circle at 30% 86%, rgba(98, 88, 255, 0.75), transparent 24%),
-    linear-gradient(180deg, #10008a 0%, #060652 100%);
+  flex-shrink: 0;
 }
 
-.login-visual-glow {
-  position: absolute;
+.login-visual-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  border-radius: 999px;
-  filter: blur(80px);
-  opacity: 0.85;
-}
-
-.login-visual-glow--top {
-  width: 180px;
-  height: 180px;
-  top: 70px;
-  left: 40px;
-  background: rgba(168, 158, 255, 0.55);
-}
-
-.login-visual-glow--center {
-  width: 260px;
-  height: 260px;
-  top: 280px;
-  left: 180px;
-  background: rgba(151, 145, 255, 0.45);
-}
-
-.login-visual-glow--bottom {
-  width: 220px;
-  height: 220px;
-  bottom: 60px;
-  left: 30px;
-  background: rgba(124, 114, 255, 0.35);
 }
 
 @media (max-width: 1200px) {

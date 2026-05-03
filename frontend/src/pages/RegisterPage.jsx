@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { registerUser } from '../api/auth'
+import authVisual from '../assets/auth-visual.png'
 import './RegisterPage.css'
 
 const initialFormData = {
@@ -90,10 +91,18 @@ function RegisterPage() {
     if (name === 'password' || name === 'confirmPassword') {
       if (nextFormData.password && nextFormData.password.length < 8) {
         nextErrors.password = 'Password must be at least 8 characters'
+      } else {
+        nextErrors.password = ''
       }
 
-      if (nextFormData.confirmPassword && nextFormData.confirmPassword !== nextFormData.password) {
-        nextErrors.confirmPassword = 'Passwords do not match'
+      if (nextFormData.confirmPassword) {
+        if (nextFormData.confirmPassword !== nextFormData.password) {
+          nextErrors.confirmPassword = 'Passwords do not match'
+        } else {
+          nextErrors.confirmPassword = ''
+        }
+      } else {
+        nextErrors.confirmPassword = ''
       }
     }
 
@@ -301,9 +310,7 @@ function RegisterPage() {
 
         <div className="register-visual-side" aria-hidden="true">
           <div className="register-visual-card">
-            <span className="register-visual-glow register-visual-glow--top" />
-            <span className="register-visual-glow register-visual-glow--center" />
-            <span className="register-visual-glow register-visual-glow--bottom" />
+            <img className="register-visual-image" src={authVisual} alt="" />
           </div>
         </div>
       </div>
