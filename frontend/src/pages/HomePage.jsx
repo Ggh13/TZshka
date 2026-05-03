@@ -6,6 +6,7 @@ import {
   createSession,
   deleteSession,
   getSessions,
+  joinSession,
 } from '../api/sessions'
 import './HomePage.css'
 
@@ -95,6 +96,18 @@ function HomePage() {
 
     loadHistory(activeSessionId)
   }, [activeSessionId])
+
+  async function handleSelectSession(sessionId) {
+  try {
+    await joinSession(sessionId)
+    setActiveSessionId(sessionId)
+    setModeOpen(false)
+    setStandardOpen(false)
+    setResponseError('')
+  } catch (error) {
+    setResponseError(error.message)
+  }
+}
 
   async function loadSessions() {
     try {
@@ -427,11 +440,7 @@ function HomePage() {
               <button
                 className="workspace-chat-link"
                 type="button"
-                onClick={() => {
-                  setActiveSessionId(session.id)
-                  setModeOpen(false)
-                  setStandardOpen(false)
-                }}
+                onClick={() => handleSelectSession(session.id)}
               >
                 {session.name}
               </button>
