@@ -1,14 +1,17 @@
 .landing-page {
-  min-height: 100dvh;
+  height: 100dvh;
   overflow: hidden;
   background: #000;
   color: #fff;
   padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .landing-header {
   display: flex;
   justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .landing-header-actions {
@@ -52,7 +55,8 @@
 }
 
 .landing-main {
-  min-height: calc(100dvh - 70px);
+  flex: 1;
+  min-height: 0;
   max-width: 1090px;
   margin: 0 auto;
   display: grid;
@@ -93,11 +97,13 @@
 
 @media (max-width: 1180px) {
   .landing-page {
+    height: auto;
+    min-height: 100dvh;
     overflow: auto;
   }
 
   .landing-main {
-    min-height: auto;
+    flex: none;
     padding: 48px 0;
     grid-template-columns: 1fr;
     gap: 40px;
