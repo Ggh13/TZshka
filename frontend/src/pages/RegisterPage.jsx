@@ -127,6 +127,7 @@ function RegisterPage() {
 
     try {
       await registerUser({
+        login: formData.login.trim(),
         email: formData.email.trim(),
         password: formData.password,
         role: 'user',
