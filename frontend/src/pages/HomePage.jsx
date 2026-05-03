@@ -1,52 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sendFileToLLM, sendTextToLLM } from '../api/llm'
+import { getSessionHistory } from '../api/history'
+import {
+  createSession,
+  deleteSession,
+  getSessions,
+} from '../api/sessions'
 import './HomePage.css'
 
 const modeOptions = [
-  {
-    label: 'Instant',
-    description: 'Quick responses',
-    value: 'Instant',
-  },
-  {
-    label: 'Thinking',
-    description: 'Solves complex tasks',
-    value: 'Thinking',
-  },
+  { label: 'Instant', value: 'Instant' },
+  { label: 'Thinking', value: 'Thinking' },
 ]
 
 const standardOptions = [
-  {
-    label: 'No standard',
-    description: 'Checking without standard',
-    value: '',
-  },
-  {
-    label: 'GOST-19',
-    description: 'Checking according to GOST-19',
-    value: 'GOST-19',
-  },
-  {
-    label: 'GOST-2',
-    description: 'Checking according to GOST-34',
-    value: 'GOST-2',
-  },
+  { label: 'No standard', value: '' },
+  { label: 'ГОСТ-19', value: 'ГОСТ-19' },
+  { label: 'ГОСТ-34', value: 'ГОСТ-34' },
 ]
-
-function createChat(id, title) {
-  return {
-    id,
-    title,
-    text: '',
-    selectedFile: null,
-    isSending: false,
-    responseData: null,
-    responseError: '',
-    selectedMode: 'Instant',
-    selectedStandard: 'GOST-19',
-  }
-}
 
 function HomePage() {
   const navigate = useNavigate()
@@ -55,10 +27,21 @@ function HomePage() {
   const standardDropdownRef = useRef(null)
   const nextChatNumberRef = useRef(1)
 
+  const [sessions, setSessions] = useState([])
+  const [activeSessionId, setActiveSessionId] = useState(null)
+  const [history, setHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+
+  const [text, setText] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [isSending, setIsSending] = useState(false)
+  const [responseData, setResponseData] = useState(null)
+  const [responseError, setResponseError] = useState('')
+
   const [modeOpen, setModeOpen] = useState(false)
   const [standardOpen, setStandardOpen] = useState(false)
-  const [chats, setChats] = useState([createChat(1, 'Chat')])
-  const [activeChatId, setActiveChatId] = useState(1)
+  const [selectedMode, setSelectedMode] = useState(modeOptions[0])
+  const [selectedStandard, setSelectedStandard] = useState(standardOptions[1])
 
   const displayName = useMemo(() => {
     return (
@@ -68,13 +51,19 @@ function HomePage() {
     )
   }, [])
 
-  const activeChat =
-    chats.find((chat) => chat.id === activeChatId) || chats[0] || createChat(1, 'Chat')
+  const activeSession =
+    sessions.find((session) => session.id === activeSessionId) || null
 
   const hasAnswerBlock =
-    activeChat.isSending ||
-    Boolean(activeChat.responseData) ||
-    Boolean(activeChat.responseError)
+    historyLoading ||
+    isSending ||
+    Boolean(responseData) ||
+    Boolean(responseError) ||
+    history.length > 0
+
+  useEffect(() => {
+    loadSessions()
+  }, [])
 
   useEffect(() => {
     function handleOutsideClick(event) {
@@ -99,17 +88,57 @@ function HomePage() {
     }
   }, [])
 
-  function updateActiveChat(patch) {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === activeChatId
-          ? {
-              ...chat,
-              ...patch,
-            }
-          : chat
-      )
-    )
+  useEffect(() => {
+    if (!activeSessionId) {
+      return
+    }
+
+    loadHistory(activeSessionId)
+  }, [activeSessionId])
+
+  async function loadSessions() {
+    try {
+      const loadedSessions = await getSessions()
+
+      if (loadedSessions.length === 0) {
+        const created = await createSession('Chat')
+        setSessions([created])
+        setActiveSessionId(created.id)
+        nextChatNumberRef.current = 1
+        return
+      }
+
+      setSessions(loadedSessions)
+      setActiveSessionId(loadedSessions[0].id)
+
+      const numbered = loadedSessions
+        .map((session) => {
+          const match = session.name.match(/^Chat\s+(\d+)$/)
+          return match ? Number(match[1]) : 0
+        })
+        .filter(Boolean)
+
+      nextChatNumberRef.current =
+        numbered.length > 0 ? Math.max(...numbered) + 1 : 1
+    } catch (error) {
+      setResponseError(error.message)
+    }
+  }
+
+  async function loadHistory(sessionId) {
+    setHistoryLoading(true)
+    setResponseError('')
+    setResponseData(null)
+
+    try {
+      const corrections = await getSessionHistory(sessionId)
+      setHistory(corrections)
+    } catch (error) {
+      setHistory([])
+      setResponseError(error.message)
+    } finally {
+      setHistoryLoading(false)
+    }
   }
 
   function handleLogout() {
@@ -119,107 +148,110 @@ function HomePage() {
     navigate('/login')
   }
 
+  async function handleNewChat() {
+    try {
+      const name =
+        nextChatNumberRef.current === 1
+          ? 'Chat 1'
+          : `Chat ${nextChatNumberRef.current}`
+
+      const created = await createSession(name)
+
+      nextChatNumberRef.current += 1
+
+      setSessions((prev) => [...prev, created])
+      setActiveSessionId(created.id)
+      setHistory([])
+      setText('')
+      setSelectedFile(null)
+      setResponseData(null)
+      setResponseError('')
+      setModeOpen(false)
+      setStandardOpen(false)
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (error) {
+      setResponseError(error.message)
+    }
+  }
+
+  async function handleDeleteSession(sessionId) {
+    try {
+      await deleteSession(sessionId)
+
+      const nextSessions = sessions.filter((session) => session.id !== sessionId)
+
+      if (nextSessions.length === 0) {
+        const created = await createSession('Chat')
+        setSessions([created])
+        setActiveSessionId(created.id)
+        setHistory([])
+        return
+      }
+
+      setSessions(nextSessions)
+
+      if (sessionId === activeSessionId) {
+        setActiveSessionId(nextSessions[0].id)
+      }
+    } catch (error) {
+      setResponseError(error.message)
+    }
+  }
+
   function handleAttachClick() {
     fileInputRef.current?.click()
   }
 
   function handleFileChange(event) {
     const file = event.target.files?.[0] || null
-    updateActiveChat({
-      selectedFile: file,
-      responseError: '',
-    })
-  }
-
-  function handleNewChat() {
-    const id = Date.now()
-    const title = `Chat ${nextChatNumberRef.current}`
-
-    nextChatNumberRef.current += 1
-
-    const newChat = createChat(id, title)
-
-    setChats((prev) => [...prev, newChat])
-    setActiveChatId(id)
-    setModeOpen(false)
-    setStandardOpen(false)
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  function handleDeleteChat(chatId) {
-    setChats((prev) => {
-      const filtered = prev.filter((chat) => chat.id !== chatId)
-
-      if (filtered.length === 0) {
-        const fallbackChat = createChat(Date.now(), 'Chat')
-        nextChatNumberRef.current = 1
-        setActiveChatId(fallbackChat.id)
-        return [fallbackChat]
-      }
-
-      if (chatId === activeChatId) {
-        setActiveChatId(filtered[0].id)
-      }
-
-      return filtered
-    })
-
-    setModeOpen(false)
-    setStandardOpen(false)
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    setSelectedFile(file)
+    setResponseError('')
   }
 
   async function handleSend() {
-    if (!activeChat.text.trim() && !activeChat.selectedFile) {
+    if (!activeSessionId || (!text.trim() && !selectedFile)) {
       return
     }
 
-    updateActiveChat({
-      isSending: true,
-      responseError: '',
-      responseData: null,
-    })
+    setIsSending(true)
+    setResponseError('')
+    setResponseData(null)
 
     try {
       let result
 
-      if (activeChat.selectedFile) {
+      if (selectedFile) {
         result = await sendFileToLLM({
-          mode: activeChat.selectedMode,
-          standard: activeChat.selectedStandard || undefined,
-          file: activeChat.selectedFile,
+          mode: selectedMode.value,
+          standard: selectedStandard.value || undefined,
+          file: selectedFile,
+          sessionId: activeSessionId,
         })
       } else {
         result = await sendTextToLLM({
-          mode: activeChat.selectedMode,
-          standard: activeChat.selectedStandard || undefined,
-          content: activeChat.text.trim(),
+          mode: selectedMode.value,
+          standard: selectedStandard.value || undefined,
+          content: text.trim(),
+          sessionId: activeSessionId,
         })
       }
 
-      updateActiveChat({
-        isSending: false,
-        responseData: result,
-        responseError: '',
-        text: '',
-        selectedFile: null,
-      })
+      setResponseData(result)
+      setText('')
+      setSelectedFile(null)
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+
+      await loadHistory(activeSessionId)
     } catch (error) {
-      updateActiveChat({
-        isSending: false,
-        responseError: error.message,
-        responseData: null,
-      })
+      setResponseError(error.message)
+    } finally {
+      setIsSending(false)
     }
   }
 
@@ -237,19 +269,16 @@ function HomePage() {
             className="workspace-dropdown-option"
             onClick={() => {
               if (type === 'mode') {
-                updateActiveChat({ selectedMode: option.value })
+                setSelectedMode(option)
                 setModeOpen(false)
               } else {
-                updateActiveChat({ selectedStandard: option.value })
+                setSelectedStandard(option)
                 setStandardOpen(false)
               }
             }}
           >
             <span className="workspace-dropdown-option-label">
               {option.label}
-            </span>
-            <span className="workspace-dropdown-option-description">
-              {option.description}
             </span>
           </button>
         ))}
@@ -265,78 +294,117 @@ function HomePage() {
     return (
       <div className="workspace-answer-issues">
         {issues.map((issue, index) => (
-          <div key={`${issue.rule_id}-${index}`} className="workspace-answer-issue">
-            <div className="workspace-answer-issue-title">{issue.rule_id}</div>
-            <div className="workspace-answer-issue-text">{issue.problem}</div>
-            <div className="workspace-answer-issue-text workspace-answer-issue-text--muted">
-              {issue.explanation}
-            </div>
+          <div key={`${issue.rule_id || 'issue'}-${index}`} className="workspace-answer-issue">
+            {issue.rule_id && (
+              <div className="workspace-answer-issue-title">{issue.rule_id}</div>
+            )}
+
+            {issue.problem && (
+              <div className="workspace-answer-issue-text">{issue.problem}</div>
+            )}
+
+            {issue.explanation && (
+              <div className="workspace-answer-issue-text workspace-answer-issue-text--muted">
+                {issue.explanation}
+              </div>
+            )}
           </div>
         ))}
       </div>
     )
   }
 
-  function renderResponse() {
-    if (activeChat.isSending) {
-      return (
-        <div className="workspace-answer-state">
-          Processing your request...
-        </div>
-      )
-    }
-
-    if (activeChat.responseError) {
-      return (
-        <div className="workspace-answer-state workspace-answer-state--error">
-          {activeChat.responseError}
-        </div>
-      )
-    }
-
-    if (!activeChat.responseData?.data) {
-      return (
-        <div className="workspace-answer-state">
-          No response yet.
-        </div>
-      )
-    }
-
-    const rulesChecker = activeChat.responseData.data.rules_checker
-    const standardChecker = activeChat.responseData.data.standard_checker
+  function renderLLMBlock(data) {
+    const rulesChecker = data?.rules_checker
+    const standardChecker = data?.standard_checker
 
     return (
       <div className="workspace-answer-sections">
         {rulesChecker && (
           <section className="workspace-answer-section">
             <h3 className="workspace-answer-section-title">Rules check</h3>
-            <p className="workspace-answer-status">
-              Status: {rulesChecker.status}
-            </p>
-            <p className="workspace-answer-feedback">{rulesChecker.feedback}</p>
-            {renderIssues(rulesChecker.issues)}
+
+            {typeof rulesChecker === 'string' ? (
+              <p className="workspace-answer-feedback">{rulesChecker}</p>
+            ) : (
+              <>
+                {rulesChecker.status && (
+                  <p className="workspace-answer-status">
+                    Status: {rulesChecker.status}
+                  </p>
+                )}
+                {rulesChecker.feedback && (
+                  <p className="workspace-answer-feedback">{rulesChecker.feedback}</p>
+                )}
+                {renderIssues(rulesChecker.issues)}
+              </>
+            )}
           </section>
         )}
 
         {standardChecker && (
           <section className="workspace-answer-section">
             <h3 className="workspace-answer-section-title">Standard check</h3>
-            <p className="workspace-answer-status">
-              Status: {standardChecker.status}
-            </p>
-            <p className="workspace-answer-feedback">{standardChecker.feedback}</p>
-            {renderIssues(standardChecker.issues)}
+
+            {typeof standardChecker === 'string' ? (
+              <p className="workspace-answer-feedback">{standardChecker}</p>
+            ) : (
+              <>
+                {standardChecker.status && (
+                  <p className="workspace-answer-status">
+                    Status: {standardChecker.status}
+                  </p>
+                )}
+                {standardChecker.feedback && (
+                  <p className="workspace-answer-feedback">{standardChecker.feedback}</p>
+                )}
+                {renderIssues(standardChecker.issues)}
+              </>
+            )}
           </section>
         )}
       </div>
     )
   }
 
-  const selectedModeOption =
-    modeOptions.find((option) => option.value === activeChat.selectedMode) || modeOptions[0]
+  function renderHistory() {
+    if (historyLoading) {
+      return <div className="workspace-answer-state">Loading history...</div>
+    }
 
-  const selectedStandardOption =
-    standardOptions.find((option) => option.value === activeChat.selectedStandard) || standardOptions[0]
+    if (responseError) {
+      return (
+        <div className="workspace-answer-state workspace-answer-state--error">
+          {responseError}
+        </div>
+      )
+    }
+
+    if (history.length === 0 && !responseData) {
+      return <div className="workspace-answer-state">No response yet.</div>
+    }
+
+    return (
+      <div className="workspace-history-list">
+        {history.map((item) => (
+          <div key={item.id} className="workspace-history-item">
+            <div className="workspace-history-label">Input</div>
+            <div className="workspace-history-input">{item.inputContent}</div>
+
+            <div className="workspace-history-label">Answer</div>
+            {renderLLMBlock(item.responseData)}
+          </div>
+        ))}
+
+        {responseData?.data && (
+          <div className="workspace-history-item">
+            <div className="workspace-history-label">Latest answer</div>
+            {renderLLMBlock(responseData.data)}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="workspace-page">
@@ -349,28 +417,30 @@ function HomePage() {
         <nav className="workspace-sidebar-nav">
           <div className="workspace-sidebar-title">Chat</div>
 
-          {chats.map((chat) => (
+          {sessions.map((session) => (
             <div
-              key={chat.id}
-              className={`workspace-chat-row ${chat.id === activeChatId ? 'workspace-chat-row--active' : ''}`}
+              key={session.id}
+              className={`workspace-chat-row ${
+                session.id === activeSessionId ? 'workspace-chat-row--active' : ''
+              }`}
             >
               <button
                 className="workspace-chat-link"
                 type="button"
                 onClick={() => {
-                  setActiveChatId(chat.id)
+                  setActiveSessionId(session.id)
                   setModeOpen(false)
                   setStandardOpen(false)
                 }}
               >
-                {chat.title}
+                {session.name}
               </button>
 
               <button
                 className="workspace-chat-delete"
                 type="button"
-                onClick={() => handleDeleteChat(chat.id)}
-                aria-label={`Delete ${chat.title}`}
+                onClick={() => handleDeleteSession(session.id)}
+                aria-label={`Delete ${session.name}`}
               >
                 ×
               </button>
@@ -398,18 +468,18 @@ function HomePage() {
             <textarea
               className="workspace-textarea"
               placeholder="Enter the text"
-              value={activeChat.text}
-              onChange={(event) => updateActiveChat({ text: event.target.value })}
+              value={text}
+              onChange={(event) => setText(event.target.value)}
             />
 
-            {activeChat.selectedFile && (
+            {selectedFile && (
               <div className="workspace-file-chip">
-                {activeChat.selectedFile.name}
+                {selectedFile.name}
                 <button
                   type="button"
                   className="workspace-file-chip-remove"
                   onClick={() => {
-                    updateActiveChat({ selectedFile: null })
+                    setSelectedFile(null)
                     if (fileInputRef.current) {
                       fileInputRef.current.value = ''
                     }
@@ -426,6 +496,7 @@ function HomePage() {
                   ref={fileInputRef}
                   className="workspace-hidden-file-input"
                   type="file"
+                  accept=".txt"
                   onChange={handleFileChange}
                 />
 
@@ -449,7 +520,7 @@ function HomePage() {
                       setStandardOpen(false)
                     }}
                   >
-                    <span>{selectedModeOption.label}</span>
+                    <span>{selectedMode.label}</span>
                     <span className="workspace-dropdown-arrow">⌄</span>
                   </button>
 
@@ -465,7 +536,7 @@ function HomePage() {
                       setModeOpen(false)
                     }}
                   >
-                    <span>{selectedStandardOption.label}</span>
+                    <span>{selectedStandard.label}</span>
                     <span className="workspace-dropdown-arrow">⌄</span>
                   </button>
 
@@ -477,7 +548,7 @@ function HomePage() {
                   type="button"
                   onClick={handleSend}
                   aria-label="Send"
-                  disabled={activeChat.isSending}
+                  disabled={isSending || !activeSession}
                 >
                   ➤
                 </button>
@@ -487,10 +558,10 @@ function HomePage() {
 
           {hasAnswerBlock && (
             <div className="workspace-answer-card">
-              <div className="workspace-answer-card-title">Answer</div>
-              <div className="workspace-answer-card-content">
-                {renderResponse()}
+              <div className="workspace-answer-card-title">
+                {activeSession ? activeSession.name : 'Answer'}
               </div>
+              <div className="workspace-answer-card-content">{renderHistory()}</div>
             </div>
           )}
         </section>
