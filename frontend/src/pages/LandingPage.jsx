@@ -26,20 +26,14 @@ function LandingPage() {
             <br />
             Detector
           </h1>
-
-          <div className="landing-buttons">
-            <Link className="landing-button landing-button--primary" to="/login">
-              Sign in
-            </Link>
-
-            <Link className="landing-button landing-button--secondary" to="/register">
-              Sign up
-            </Link>
-          </div>
         </section>
 
         <section className="landing-image-wrapper" aria-hidden="true">
-          <img className="landing-image" src={heroImage} alt="Ambiguity Detector preview" />
+          <img
+            className="landing-image"
+            src={heroImage}
+            alt="Ambiguity Detector preview"
+          />
         </section>
       </main>
     </div>
