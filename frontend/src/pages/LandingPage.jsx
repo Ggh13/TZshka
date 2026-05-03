@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import heroImage from '../assets/landing-hero.png'
+import heroImage from '../assets/hero.png'
 import './LandingPage.css'
 
 function LandingPage() {
@@ -29,11 +29,7 @@ function LandingPage() {
         </section>
 
         <section className="landing-image-wrapper" aria-hidden="true">
-          <img
-            className="landing-image"
-            src={heroImage}
-            alt="Ambiguity Detector preview"
-          />
+          <img className="landing-image" src={heroImage} alt="Ambiguity Detector preview" />
         </section>
       </main>
     </div>

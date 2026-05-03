@@ -57,10 +57,9 @@ function LoginPage() {
       [name]: '',
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
     if (name === 'email') {
       const trimmedEmail = value.trim()
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
       if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
         nextErrors.email = 'Enter a valid email'
@@ -93,6 +92,8 @@ function LoginPage() {
       })
 
       localStorage.setItem('token', result.token)
+      localStorage.setItem('userEmail', formData.email.trim())
+
       setServerMessage('Login successful. Redirecting...')
 
       setTimeout(() => {
@@ -110,10 +111,7 @@ function LoginPage() {
       <div className="login-card">
         <div className="login-form-side">
           <div className="login-form-content">
-            <h1 className="login-title">Sign in</h1>
-            <p className="login-subtitle">
-              Welcome back. Please enter your details.
-            </p>
+            <h1 className="login-title">Sign In</h1>
 
             <div className="login-social-buttons">
               <button type="button" className="login-social-button">

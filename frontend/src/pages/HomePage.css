@@ -1,0 +1,252 @@
+.home-page {
+  min-height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 272px 1fr;
+  background: #000;
+  color: #e3e3e3;
+}
+
+.home-sidebar {
+  background: #1e1f20;
+  padding: 27px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 29px;
+}
+
+.home-new-chat {
+  margin: 0 30px;
+  height: 47px;
+  border: none;
+  border-radius: 25px;
+  background: transparent;
+  color: #e3e3e3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 18px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.home-new-chat:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.home-new-chat-icon {
+  font-size: 20px;
+}
+
+.home-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 18px;
+}
+
+.home-chat-item {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 18px;
+  background: transparent;
+  color: #e3e3e3;
+  text-align: left;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.home-chat-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.home-logout {
+  margin: auto 18px 0;
+  min-height: 48px;
+  border: 1px solid #4a4a4a;
+  border-radius: 18px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.home-logout:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.home-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 24px;
+}
+
+.home-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 33px;
+}
+
+.home-user-block {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.home-user-name {
+  font-size: 20px;
+  color: #fff;
+}
+
+.home-user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #d9d9d9;
+}
+
+.home-main {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 41px;
+}
+
+.home-input-card {
+  background: #1e1f20;
+  border-radius: 30px;
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-textarea {
+  width: 100%;
+  min-height: 69px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #e3e3e3;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.home-textarea::placeholder {
+  color: #e3e3e3;
+}
+
+.home-input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-mode-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.home-mode-button {
+  min-width: 90px;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #e3e3e3;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.home-mode-button--active {
+  background: #e3e3e3;
+  color: #000;
+}
+
+.home-send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #e3e3e3;
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.home-send-button:hover {
+  transform: translateX(2px);
+}
+
+.home-answer-card {
+  background: #1e1f20;
+  border-radius: 30px;
+  padding: 20px;
+  min-height: 503px;
+}
+
+.home-answer-body {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 9px;
+  gap: 16px;
+}
+
+.home-answer-content {
+  white-space: pre-wrap;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 24px;
+  line-height: 1.3;
+  color: #e3e3e3;
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.home-answer-content::-webkit-scrollbar {
+  display: none;
+}
+
+.home-answer-scroll {
+  width: 9px;
+  border-radius: 40px;
+  background: #454545;
+  display: flex;
+  align-items: flex-start;
+}
+
+.home-answer-scroll-thumb {
+  width: 9px;
+  height: 156px;
+  border-radius: 40px;
+  background: #e3e3e3;
+}
+
+@media (max-width: 980px) {
+  .home-page {
+    overflow: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .home-sidebar {
+    padding: 18px;
+  }
+
+  .home-content {
+    padding-top: 0;
+  }
+
+  .home-main {
+    width: 100%;
+  }
+}
