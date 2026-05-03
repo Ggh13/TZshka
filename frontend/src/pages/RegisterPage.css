@@ -38,6 +38,7 @@
   line-height: 1.2;
   font-weight: 500;
   color: #fff;
+  text-align: center;
 }
 
 .register-subtitle {
@@ -45,6 +46,7 @@
   font-size: 20px;
   font-weight: 400;
   color: #a0a0a0;
+  text-align: center;
 }
 
 .register-social-buttons {
@@ -80,6 +82,29 @@
   transform: scale(0.98);
 }
 
+.google-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-icon__g {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  background: conic-gradient(
+    #4285f4 0deg 90deg,
+    #34a853 90deg 180deg,
+    #fbbc05 180deg 270deg,
+    #ea4335 270deg 360deg
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .register-social-icon {
   width: 22px;
   height: 22px;
@@ -88,10 +113,6 @@
   justify-content: center;
   font-weight: 700;
   font-size: 0.95rem;
-}
-
-.register-social-icon--google {
-  color: #fbbc05;
 }
 
 .register-social-icon--yandex {

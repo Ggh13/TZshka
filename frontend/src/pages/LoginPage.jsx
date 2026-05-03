@@ -4,13 +4,21 @@ import { loginUser } from '../api/auth'
 import authVisual from '../assets/auth-visual.png'
 import './LoginPage.css'
 
+function GoogleIcon() {
+  return (
+    <span className="google-icon" aria-hidden="true">
+      <span className="google-icon__g">G</span>
+    </span>
+  )
+}
+
 const initialFormData = {
-  email: '',
+  login: '',
   password: '',
 }
 
 const initialErrors = {
-  email: '',
+  login: '',
   password: '',
 }
 
@@ -25,17 +33,12 @@ function LoginPage() {
 
   function validateForm(values) {
     const nextErrors = {
-      email: '',
+      login: '',
       password: '',
     }
 
-    const trimmedEmail = values.email.trim()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!trimmedEmail) {
-      nextErrors.email = 'Email is required'
-    } else if (!emailRegex.test(trimmedEmail)) {
-      nextErrors.email = 'Enter a valid email'
+    if (!values.login.trim()) {
+      nextErrors.login = 'Login is required'
     }
 
     if (!values.password) {
@@ -48,27 +51,16 @@ function LoginPage() {
   function handleChange(event) {
     const { name, value } = event.target
 
-    const nextFormData = {
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    }
+    }))
 
-    const nextErrors = {
-      ...errors,
+    setErrors((prev) => ({
+      ...prev,
       [name]: '',
-    }
+    }))
 
-    if (name === 'email') {
-      const trimmedEmail = value.trim()
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-      if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
-        nextErrors.email = 'Enter a valid email'
-      }
-    }
-
-    setFormData(nextFormData)
-    setErrors(nextErrors)
     setServerMessage('')
   }
 
@@ -88,12 +80,12 @@ function LoginPage() {
 
     try {
       const result = await loginUser({
-        email: formData.email.trim(),
+        login: formData.login.trim(),
         password: formData.password,
       })
 
       localStorage.setItem('token', result.token)
-      localStorage.setItem('userEmail', formData.email.trim())
+      localStorage.setItem('userLogin', formData.login.trim())
 
       setServerMessage('Login successful. Redirecting...')
 
@@ -116,7 +108,7 @@ function LoginPage() {
 
             <div className="login-social-buttons">
               <button type="button" className="login-social-button">
-                <span className="login-social-icon login-social-icon--google">G</span>
+                <GoogleIcon />
                 <span>Google</span>
               </button>
 
@@ -134,22 +126,22 @@ function LoginPage() {
 
             <form className="login-form" onSubmit={handleSubmit} noValidate>
               <div className="login-form-group">
-                <label className="login-form-label" htmlFor="email">
-                  Email
+                <label className="login-form-label" htmlFor="login">
+                  Login
                 </label>
                 <input
-                  id="email"
-                  className={`login-form-input ${errors.email ? 'login-form-input--error' : ''}`}
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  id="login"
+                  className={`login-form-input ${errors.login ? 'login-form-input--error' : ''}`}
+                  type="text"
+                  name="login"
+                  value={formData.login}
                   onChange={handleChange}
-                  placeholder="example@mail.com"
-                  autoComplete="email"
+                  placeholder="IvanIvanov"
+                  autoComplete="username"
                 />
-                {errors.email && (
+                {errors.login && (
                   <p className="login-form-error" role="alert">
-                    {errors.email}
+                    {errors.login}
                   </p>
                 )}
               </div>

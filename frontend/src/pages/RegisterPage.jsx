@@ -4,6 +4,14 @@ import { registerUser } from '../api/auth'
 import authVisual from '../assets/auth-visual.png'
 import './RegisterPage.css'
 
+function GoogleIcon() {
+  return (
+    <span className="google-icon" aria-hidden="true">
+      <span className="google-icon__g">G</span>
+    </span>
+  )
+}
+
 const initialFormData = {
   login: '',
   email: '',
@@ -130,7 +138,6 @@ function RegisterPage() {
         login: formData.login.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        role: 'user',
       })
 
       setServerMessage('Registration completed successfully. Redirecting to sign in...')
@@ -157,7 +164,7 @@ function RegisterPage() {
 
             <div className="register-social-buttons">
               <button type="button" className="register-social-button">
-                <span className="register-social-icon register-social-icon--google">G</span>
+                <GoogleIcon />
                 <span>Google</span>
               </button>
 
