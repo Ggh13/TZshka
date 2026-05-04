@@ -36,7 +36,6 @@ function HomePage() {
   const [text, setText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [isSending, setIsSending] = useState(false)
-  const [responseData, setResponseData] = useState(null)
   const [responseError, setResponseError] = useState('')
 
   const [modeOpen, setModeOpen] = useState(false)
@@ -58,7 +57,6 @@ function HomePage() {
   const hasAnswerBlock =
     historyLoading ||
     isSending ||
-    Boolean(responseData) ||
     Boolean(responseError) ||
     history.length > 0
 
@@ -141,11 +139,17 @@ function HomePage() {
   async function loadHistory(sessionId) {
     setHistoryLoading(true)
     setResponseError('')
-    setResponseData(null)
 
     try {
       const corrections = await getSessionHistory(sessionId)
-      setHistory(corrections)
+
+      const sortedCorrections = [...corrections].sort((a, b) => {
+        const first = new Date(a.createdAt).getTime()
+        const second = new Date(b.createdAt).getTime()
+        return first - second
+      })
+
+      setHistory(sortedCorrections)
     } catch (error) {
       setHistory([])
       setResponseError(error.message)
@@ -177,7 +181,6 @@ function HomePage() {
       setHistory([])
       setText('')
       setSelectedFile(null)
-      setResponseData(null)
       setResponseError('')
       setModeOpen(false)
       setStandardOpen(false)
@@ -231,20 +234,17 @@ function HomePage() {
 
     setIsSending(true)
     setResponseError('')
-    setResponseData(null)
 
     try {
-      let result
-
       if (selectedFile) {
-        result = await sendFileToLLM({
+        await sendFileToLLM({
           mode: selectedMode.value,
           standard: selectedStandard.value || undefined,
           file: selectedFile,
           sessionId: activeSessionId,
         })
       } else {
-        result = await sendTextToLLM({
+        await sendTextToLLM({
           mode: selectedMode.value,
           standard: selectedStandard.value || undefined,
           content: text.trim(),
@@ -252,7 +252,6 @@ function HomePage() {
         })
       }
 
-      setResponseData(result)
       setText('')
       setSelectedFile(null)
 
@@ -393,7 +392,7 @@ function HomePage() {
       )
     }
 
-    if (history.length === 0 && !responseData) {
+    if (history.length === 0) {
       return <div className="workspace-answer-state">No response yet.</div>
     }
 
@@ -408,13 +407,6 @@ function HomePage() {
             {renderLLMBlock(item.responseData)}
           </div>
         ))}
-
-        {responseData?.data && (
-          <div className="workspace-history-item">
-            <div className="workspace-history-label">Latest answer</div>
-            {renderLLMBlock(responseData.data)}
-          </div>
-        )}
       </div>
     )
   }
