@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 from typing import Literal
+from fastapi import Form
 
 
 class Mode(BaseModel):
@@ -13,3 +14,10 @@ class Mode(BaseModel):
         if v is not None and v not in allowed:
             raise ValueError("Mode value must be 'Instant' or 'Thinking'")
         return v
+
+    @classmethod
+    def as_form(
+            cls,
+            mode: Literal["Instant"] = Form("Instant"),
+    ):
+        return cls(mode=mode)

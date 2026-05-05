@@ -70,12 +70,11 @@ func main() {
 
 	httpClient := &http.Client{}
 	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
+	llmHandler := llmRoute.New(llmSvc, zapLog)
 
-	historyRepoInstance := historyRepo.New(pgDB)
+	historyRepoInstance := historyRepo.New(pgDB, zapLog)
 	historySvc := historyService.New(historyRepoInstance, zapLog)
-	historyHandler := historyRoute.New(historySvc, zapLog)
-
-	llmHandler := llmRoute.New(llmSvc, historySvc, zapLog)
+	historyHandler := historyRoute.New(historySvc, sessionRepoInstance, tokenSvc, zapLog)
 
 	r := gin.Default()
 	r.Use(corsMiddleware())

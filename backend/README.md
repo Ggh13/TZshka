@@ -63,7 +63,7 @@ go test -v ./tests/...
 | SessionID | UUID | ID сессии |
 | InputContent | text | Входной текст |
 | ResponseData | JSONB | Ответ от LLM |
-| CreatedAt | timestamp | Дата создания
+| CreatedAt | timestamp | Дата создания |
 
 ## API
 
@@ -205,6 +205,7 @@ Content-Type: multipart/form-data
 
 ```bash
 GET /api/history/:id
+Authorization: Bearer <token>
 ```
 
 **Ответ (200):**

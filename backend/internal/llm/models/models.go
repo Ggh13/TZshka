@@ -2,9 +2,9 @@ package llmModels
 
 type TextRequest struct {
 	Mode      string `json:"mode" form:"mode"`
-	Standard  string `json:"standard" form:"standard"`
-	Content   string `json:"content" form:"content" binding:"required"`
-	SessionID string `json:"sessionId" form:"sessionId"`
+	Standard string `json:"standard" form:"standard"`
+	Content  string `json:"content" form:"content" binding:"required"`
+	SessionID string `json:"sessionId,omitempty" form:"sessionId"`
 }
 
 type LLMSuccessResponse struct {
