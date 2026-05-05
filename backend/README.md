@@ -1,6 +1,6 @@
 # TZshka
 
-Backend проект с авторизацией и регистрацией.
+Backend проект с авторизацией, управлением сессиями и историей правок.
 
 ## Технологии
 
@@ -11,14 +11,6 @@ Backend проект с авторизацией и регистрацией.
 - pgx (работа с PostgreSQL)
 
 ## Запуск
-
-### Локально
-
-```bash
-cd backend
-go build -o app.exe ./cmd/main.go
-./app.exe
-```
 
 ### Docker
 
@@ -54,9 +46,32 @@ go test -v ./tests/...
 | Role | string | Роль пользователя (admin/user) |
 | CreatedAt | timestamp | Дата создания |
 
+### Session
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| ID | UUID | Уникальный идентификатор |
+| Name | string | Название сессии |
+| CreatorID | UUID | ID создателя |
+| CreatedAt | timestamp | Дата создания |
+
+### CorrectionsHistory
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| ID | UUID | Уникальный идентификатор |
+| SessionID | UUID | ID сессии |
+| InputContent | text | Входной текст |
+| ResponseData | JSONB | Ответ от LLM |
+| CreatedAt | timestamp | Дата создания |
+
+---
+
 ## API
 
-### Регистрация
+### Auth
+
+#### Регистрация
 
 ```bash
 POST /api/register
@@ -90,17 +105,7 @@ Content-Type: application/json
 }
 ```
 
-**Ошибка - невалидный role (400):**
-```json
-{
-  "error": {
-    "code": "INVALID_REQUEST",
-    "message": "invalid request"
-  }
-}
-```
-
-### Вход
+#### Вход
 
 ```bash
 POST /api/login
@@ -129,6 +134,148 @@ Content-Type: application/json
 }
 ```
 
+---
+
+### Session
+
+#### Создание сессии
+
+```bash
+POST /api/sessions/create
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "My Session"
+}
+```
+
+**Успешный ответ (201):**
+```json
+{
+  "session": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "My Session",
+    "creatorId": "00000000-0000-0000-0000-000000000002"
+  }
+}
+```
+
+**Ошибка - без токена (401):**
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "invalid token"
+  }
+}
+```
+
+#### Получение сессий пользователя
+
+```bash
+GET /api/sessions
+Authorization: Bearer <token>
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "sessions": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "My Session",
+      "creatorId": "00000000-0000-0000-0000-000000000002"
+    }
+  ]
+}
+```
+
+#### Вход в сессию
+
+```bash
+POST /api/sessions/join
+Content-Type: application/json
+
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "session": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "My Session",
+    "creatorId": "00000000-0000-0000-0000-000000000002"
+  }
+}
+```
+
+**Ошибка - сессия не найдена (404):**
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "session not found"
+  }
+}
+```
+
+#### Удаление сессии
+
+```bash
+DELETE /api/sessions
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "message": "session deleted"
+}
+```
+
+---
+
+### History
+
+#### Получение истории сессии
+
+```bash
+GET /api/history/:id
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "corrections": [
+    {
+      "id": "uuid",
+      "sessionId": "uuid",
+      "inputContent": "Текст ТЗ",
+      "responseData": {},
+      "createdAt": "2026-04-27T12:00:00Z"
+    }
+  ]
+}
+```
+
+**Ошибка - невалидный id (400):**
+```json
+{
+  "error": "invalid session id"
+}
+```
+
+---
+
 ## Структура проекта
 
 ```
@@ -143,11 +290,20 @@ backend/
 │   └── auth_test.go         # Тесты
 ├── internal/
 │   ├── auth/
-│   │   ├── domain/          # Доменные модели
 │   │   ├── models/          # DTO
 │   │   ├── repository/      # Работа с БД
 │   │   ├── route/           # HTTP хендлеры
 │   │   └── service/         # Бизнес-логика
+│   ├── session/
+│   │   ├── models/          # DTO
+│   │   ├── repository/      # Работа с БД
+│   │   ├── route/           # HTTP хендлеры
+│   │   └── service/        # Бизнес-логика
+│   ├── history/
+│   │   ├── models/         # DTO
+│   │   ├── repository/     # Работа с БД
+│   │   ├── route/          # HTTP хендлеры
+│   │   └── service/        # Бизнес-логика
 │   ├── config/              # Загрузка конфига
 │   └── migrations/          # Миграции БД
 ├── pkg/
