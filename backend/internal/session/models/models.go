@@ -33,6 +33,13 @@ type SessionsResponse struct {
 	Sessions []Session `json:"sessions"`
 }
 
+<<<<<<< HEAD
+=======
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
+>>>>>>> 11ffaa0c6cc4e0527a4a844e359e85b66fdd1f2e
 type ErrorResponse struct {
 	Error struct {
 		Code    string `json:"code"`
