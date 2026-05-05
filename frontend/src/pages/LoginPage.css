@@ -1,4 +1,4 @@
-.register-page {
+.login-page {
   min-height: 100dvh;
   overflow: hidden;
   display: flex;
@@ -8,7 +8,7 @@
   background: #000;
 }
 
-.register-card {
+.login-card {
   width: min(1290px, 100%);
   height: min(850px, calc(100dvh - 48px));
   display: grid;
@@ -21,19 +21,19 @@
   border-radius: 50px;
 }
 
-.register-form-side {
+.login-form-side {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.register-form-content {
+.login-form-content {
   width: 100%;
   max-width: 499px;
 }
 
-.register-title {
-  margin: 0 0 10px;
+.login-title {
+  margin: 0 0 34px;
   font-size: 32px;
   line-height: 1.2;
   font-weight: 500;
@@ -41,21 +41,13 @@
   text-align: center;
 }
 
-.register-subtitle {
-  margin: 0 0 30px;
-  font-size: 20px;
-  font-weight: 400;
-  color: #a0a0a0;
-  text-align: center;
-}
-
-.register-social-buttons {
+.login-social-buttons {
   display: flex;
-  gap: 15px;
+  gap: 26px;
   margin-bottom: 30px;
 }
 
-.register-social-button {
+.login-social-button {
   flex: 1;
   min-height: 54px;
   padding: 15px 24px;
@@ -74,11 +66,11 @@
     transform 0.12s ease;
 }
 
-.register-social-button:hover {
+.login-social-button:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.register-social-button:active {
+.login-social-button:active {
   transform: scale(0.98);
 }
 
@@ -105,7 +97,7 @@
   color: transparent;
 }
 
-.register-social-icon {
+.login-social-icon {
   width: 22px;
   height: 22px;
   display: inline-flex;
@@ -115,48 +107,48 @@
   font-size: 0.95rem;
 }
 
-.register-social-icon--yandex {
+.login-social-icon--yandex {
   color: #fc3f1d;
 }
 
-.register-divider {
+.login-divider {
   display: flex;
   align-items: center;
   gap: 20px;
   margin-bottom: 30px;
 }
 
-.register-divider-line {
+.login-divider-line {
   flex: 1;
   height: 1px;
   background: #333;
 }
 
-.register-divider-text {
+.login-divider-text {
   color: #a0a0a0;
   font-size: 15px;
 }
 
-.register-form {
+.login-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.register-form-group {
+.login-form-group {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.register-form-label {
+.login-form-label {
   padding-left: 5px;
   font-size: 18px;
   font-weight: 500;
   color: #fff;
 }
 
-.register-form-input {
+.login-form-input {
   width: 100%;
   height: 48px;
   padding: 0 15px;
@@ -171,33 +163,33 @@
     background 0.2s ease;
 }
 
-.register-form-input::placeholder {
+.login-form-input::placeholder {
   color: #a0a0a0;
 }
 
-.register-form-input:focus {
+.login-form-input:focus {
   border-color: #5a5a5a;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 
-.register-form-input--error {
+.login-form-input--error {
   border-color: #d25555;
 }
 
-.register-form-input--error:focus {
+.login-form-input--error:focus {
   border-color: #d25555;
   box-shadow: 0 0 0 3px rgba(210, 85, 85, 0.12);
 }
 
-.register-password-wrapper {
+.login-password-wrapper {
   position: relative;
 }
 
-.register-form-input--with-button {
+.login-form-input--with-button {
   padding-right: 72px;
 }
 
-.register-password-toggle {
+.login-password-toggle {
   position: absolute;
   top: 50%;
   right: 12px;
@@ -209,25 +201,18 @@
   padding: 4px 6px;
 }
 
-.register-password-toggle:hover {
+.login-password-toggle:hover {
   color: #fff;
 }
 
-.register-form-error {
+.login-form-error {
   margin: 4px 0 0;
   padding-left: 5px;
   font-size: 14px;
   color: #f07b7b;
 }
 
-.register-form-hint {
-  margin: 4px 0 0;
-  padding-left: 5px;
-  font-size: 14px;
-  color: #a0a0a0;
-}
-
-.register-submit-button {
+.login-submit-button {
   margin-top: 10px;
   width: 100%;
   height: 54px;
@@ -243,47 +228,47 @@
     transform 0.12s ease;
 }
 
-.register-submit-button:hover:not(:disabled) {
+.login-submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.register-submit-button:disabled {
+.login-submit-button:disabled {
   opacity: 0.72;
   cursor: not-allowed;
 }
 
-.register-server-message {
+.login-server-message {
   margin: 18px 0 0;
   font-size: 15px;
 }
 
-.register-server-message--success {
+.login-server-message--success {
   color: #7ce0a1;
 }
 
-.register-server-message--error {
+.login-server-message--error {
   color: #f07b7b;
 }
 
-.register-signin-text {
+.login-signup-text {
   margin: 18px 0 0;
   text-align: center;
   font-size: 15px;
   color: #fff;
 }
 
-.register-signin-text a {
+.login-signup-text a {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.register-visual-side {
+.login-visual-side {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.register-visual-card {
+.login-visual-card {
   width: 561px;
   height: 772px;
   border-radius: 30px;
@@ -291,7 +276,7 @@
   flex-shrink: 0;
 }
 
-.register-visual-image {
+.login-visual-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -299,45 +284,41 @@
 }
 
 @media (max-width: 1200px) {
-  .register-page {
+  .login-page {
     overflow: auto;
   }
 
-  .register-card {
+  .login-card {
     height: auto;
     grid-template-columns: 1fr;
     gap: 32px;
   }
 
-  .register-visual-side {
+  .login-visual-side {
     display: none;
   }
 }
 
 @media (max-width: 640px) {
-  .register-page {
+  .login-page {
     padding: 16px;
   }
 
-  .register-card {
+  .login-card {
     padding: 24px;
     border-radius: 28px;
   }
 
-  .register-social-buttons {
+  .login-social-buttons {
     flex-direction: column;
     gap: 14px;
   }
 
-  .register-title {
+  .login-title {
     font-size: 28px;
   }
 
-  .register-subtitle {
-    font-size: 16px;
-  }
-
-  .register-submit-button {
+  .login-submit-button {
     font-size: 20px;
   }
 }

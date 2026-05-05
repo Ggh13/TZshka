@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import HomePage from '../pages/HomePage'
+import LandingPage from '../pages/LandingPage'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
+import HomePage from '../pages/HomePage'
 import ProtectedRoute from './ProtectedRoute'
 import PublicRoute from './PublicRoute'
 
@@ -9,14 +10,7 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<LandingPage />} />
 
         <Route
           path="/login"
@@ -33,6 +27,15 @@ function AppRouter() {
             <PublicRoute>
               <RegisterPage />
             </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
           }
         />
       </Routes>
