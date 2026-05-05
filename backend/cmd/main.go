@@ -18,11 +18,8 @@ import (
 	historyRepo "TZshka/internal/history/repository"
 	historyRoute "TZshka/internal/history/route"
 	historyService "TZshka/internal/history/service"
-<<<<<<< HEAD
-=======
 	llmRoute "TZshka/internal/llm/route"
 	llmService "TZshka/internal/llm/service"
->>>>>>> 11ffaa0c6cc4e0527a4a844e359e85b66fdd1f2e
 	"TZshka/internal/migrations"
 	sessionRepo "TZshka/internal/session/repository"
 	sessionRoute "TZshka/internal/session/route"
@@ -71,34 +68,21 @@ func main() {
 	sessionSvc := sessionService.New(sessionRepoInstance, zapLog)
 	sessionHandler := sessionRoute.New(sessionSvc, tokenSvc, zapLog)
 
-	httpClient := &http.Client{}
-	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
-	llmHandler := llmRoute.New(llmSvc, zapLog)
-
-	historyRepoInstance := historyRepo.New(pgDB, zapLog)
-	historySvc := historyService.New(historyRepoInstance, zapLog)
-	historyHandler := historyRoute.New(historySvc, sessionRepoInstance, tokenSvc, zapLog)
-
-	tokenSvc := registr.NewTokenService(cfg.Secret)
-
-	sessionRepoInstance := sessionRepo.New(pgDB, zapLog)
-	sessionSvc := sessionService.New(sessionRepoInstance, zapLog)
-	sessionHandler := sessionRoute.New(sessionSvc, tokenSvc, zapLog)
-
 	historyRepoInstance := historyRepo.New(pgDB, zapLog)
 	historySvc := historyService.New(historyRepoInstance, zapLog)
 	historyHandler := historyRoute.New(historySvc, zapLog)
+
+	httpClient := &http.Client{}
+	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
+	llmHandler := llmRoute.New(llmSvc, zapLog)
 
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
 	authHandler.RegisterRoutes(r)
 	sessionHandler.RegisterRoutes(r)
-<<<<<<< HEAD
-=======
-	llmHandler.RegisterRoutes(r)
->>>>>>> 11ffaa0c6cc4e0527a4a844e359e85b66fdd1f2e
 	historyHandler.RegisterRoutes(r)
+	llmHandler.RegisterRoutes(r)
 
 	zapLog.Info("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {

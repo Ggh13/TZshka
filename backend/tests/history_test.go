@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -49,7 +48,7 @@ func TestGetHistory(t *testing.T) {
 
 		corrections := []historyModels.Correction{
 			{
-				InputContent:  "Текст ТЗ",
+				InputContent: "Текст ТЗ",
 				ResponseData: map[string]interface{}{"status": "valid"},
 			},
 		}
@@ -58,22 +57,22 @@ func TestGetHistory(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		sessionID string
+		sessionID  string
 		wantStatus int
 	}{
 		{
 			name:       "valid session id",
-			sessionID: "00000000-0000-0000-0000-000000000001",
+			sessionID:  "00000000-0000-0000-0000-000000000001",
 			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "invalid uuid format",
-			sessionID: "invalid-uuid",
+			sessionID:  "invalid-uuid",
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name:       "session not found",
-			sessionID: "00000000-0000-0000-0000-000000000999",
+			sessionID:  "00000000-0000-0000-0000-000000000999",
 			wantStatus: http.StatusNotFound,
 		},
 	}
@@ -111,17 +110,17 @@ func TestGetHistoryUnauthorized(t *testing.T) {
 	})
 
 	tests := []struct {
-		name         string
-		authHeader   string
-		wantStatus  int
+		name       string
+		authHeader string
+		wantStatus int
 	}{
 		{
-			name:        "no authorization header",
-			authHeader:  "",
-			wantStatus:  http.StatusUnauthorized,
+			name:       "no authorization header",
+			authHeader: "",
+			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name:        "with authorization header",
+			name:       "with authorization header",
 			authHeader: "Bearer token123",
 			wantStatus: http.StatusOK,
 		},
