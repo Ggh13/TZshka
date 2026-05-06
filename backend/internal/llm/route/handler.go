@@ -25,7 +25,7 @@ func New(service *llmService.Service, log *zap.Logger) *Handler {
 
 func (h *Handler) ProcessText(c *gin.Context) {
 	var req llmModels.TextRequest
-	if err := c.ShouldBind(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		h.log.Error("failed to bind request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, llmModels.ErrorResponse{
 			Error: struct {
