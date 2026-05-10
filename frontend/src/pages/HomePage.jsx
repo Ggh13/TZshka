@@ -10,6 +10,8 @@ import {
 } from '../api/sessions'
 import './HomePage.css'
 
+const USE_MOCK_PREVIEW = true
+
 const modeOptions = [
   { label: 'Instant', value: 'Instant' },
   { label: 'Thinking', value: 'Thinking' },
@@ -21,6 +23,54 @@ const standardOptions = [
   { label: 'ГОСТ-34', value: 'ГОСТ-34' },
 ]
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function buildMockResponse(input, mode, standard) {
+  const shortInput = input.trim().slice(0, 90) || 'Текст технического задания'
+
+  return {
+    rules_checker: {
+      status: 'issues_found',
+      feedback:
+        mode === 'Thinking'
+          ? 'Нашел несколько мест, которые могут трактоваться неоднозначно.'
+          : 'Есть формулировки, которые стоит уточнить.',
+      issues: [
+        {
+          rule_id: 'R1',
+          problem: `Фраза "${shortInput}" слишком общая и не задает четкий измеримый результат.`,
+          explanation:
+            'Система или исполнитель не смогут однозначно понять, какой именно результат считается успешным. Лучше добавить конкретные критерии, сроки или числовые показатели.',
+        },
+        {
+          rule_id: 'R5',
+          problem:
+            'В тексте нет явных ограничений и критериев приемки для результата.',
+          explanation:
+            'Без критериев приемки невозможно проверить, выполнено ли требование корректно. Стоит явно указать ожидаемый результат, формат проверки и допустимые отклонения.',
+        },
+      ],
+    },
+    standard_checker: standard
+      ? {
+          status: 'issues_found',
+          feedback: `Проверка по ${standard} выявила неточности оформления и структуры.`,
+          issues: [
+            {
+              rule_id: standard,
+              problem:
+                'Структура требования выглядит неполной для выбранного стандарта.',
+              explanation:
+                'Желательно разделить цель, функциональные требования, ограничения и критерии приемки по отдельным блокам, чтобы документ лучше соответствовал стандарту.',
+            },
+          ],
+        }
+      : null,
+  }
+}
+
 function HomePage() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
@@ -30,9 +80,11 @@ function HomePage() {
 
   const [sessions, setSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
-  const [history, setHistory] = useState([])
-  const [historyLoading, setHistoryLoading] = useState(false)
 
+  const [backendHistory, setBackendHistory] = useState([])
+  const [mockHistoryMap, setMockHistoryMap] = useState({})
+
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [text, setText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [isSending, setIsSending] = useState(false)
@@ -54,11 +106,21 @@ function HomePage() {
   const activeSession =
     sessions.find((session) => session.id === activeSessionId) || null
 
+  const displayedHistory = useMemo(() => {
+    const localItems = activeSessionId ? mockHistoryMap[activeSessionId] || [] : []
+
+    return [...backendHistory, ...localItems].sort((a, b) => {
+      const first = new Date(a.createdAt).getTime()
+      const second = new Date(b.createdAt).getTime()
+      return first - second
+    })
+  }, [backendHistory, mockHistoryMap, activeSessionId])
+
   const hasAnswerBlock =
     historyLoading ||
     isSending ||
     Boolean(responseError) ||
-    history.length > 0
+    displayedHistory.length > 0
 
   useEffect(() => {
     loadSessions()
@@ -95,18 +157,6 @@ function HomePage() {
     loadHistory(activeSessionId)
   }, [activeSessionId])
 
-  async function handleSelectSession(sessionId) {
-  try {
-    await joinSession(sessionId)
-    setActiveSessionId(sessionId)
-    setModeOpen(false)
-    setStandardOpen(false)
-    setResponseError('')
-  } catch (error) {
-    setResponseError(error.message)
-  }
-}
-
   async function loadSessions() {
     try {
       const loadedSessions = await getSessions()
@@ -138,7 +188,6 @@ function HomePage() {
 
   async function loadHistory(sessionId) {
     setHistoryLoading(true)
-    setResponseError('')
 
     try {
       const corrections = await getSessionHistory(sessionId)
@@ -149,12 +198,26 @@ function HomePage() {
         return first - second
       })
 
-      setHistory(sortedCorrections)
+      setBackendHistory(sortedCorrections)
     } catch (error) {
-      setHistory([])
-      setResponseError(error.message)
+      setBackendHistory([])
+      if (!USE_MOCK_PREVIEW) {
+        setResponseError(error.message)
+      }
     } finally {
       setHistoryLoading(false)
+    }
+  }
+
+  async function handleSelectSession(sessionId) {
+    try {
+      await joinSession(sessionId)
+      setActiveSessionId(sessionId)
+      setModeOpen(false)
+      setStandardOpen(false)
+      setResponseError('')
+    } catch (error) {
+      setResponseError(error.message)
     }
   }
 
@@ -178,7 +241,7 @@ function HomePage() {
 
       setSessions((prev) => [...prev, created])
       setActiveSessionId(created.id)
-      setHistory([])
+      setBackendHistory([])
       setText('')
       setSelectedFile(null)
       setResponseError('')
@@ -203,7 +266,7 @@ function HomePage() {
         const created = await createSession('Chat')
         setSessions([created])
         setActiveSessionId(created.id)
-        setHistory([])
+        setBackendHistory([])
         return
       }
 
@@ -236,20 +299,47 @@ function HomePage() {
     setResponseError('')
 
     try {
-      if (selectedFile) {
-        await sendFileToLLM({
-          mode: selectedMode.value,
-          standard: selectedStandard.value || undefined,
-          file: selectedFile,
+      if (USE_MOCK_PREVIEW) {
+        await sleep(selectedMode.value === 'Thinking' ? 2200 : 800)
+
+        const inputContent = selectedFile
+          ? `Файл: ${selectedFile.name}`
+          : text.trim()
+
+        const mockItem = {
+          id: `mock-${Date.now()}`,
           sessionId: activeSessionId,
-        })
+          inputContent,
+          responseData: buildMockResponse(
+            inputContent,
+            selectedMode.value,
+            selectedStandard.value
+          ),
+          createdAt: new Date().toISOString(),
+        }
+
+        setMockHistoryMap((prev) => ({
+          ...prev,
+          [activeSessionId]: [...(prev[activeSessionId] || []), mockItem],
+        }))
       } else {
-        await sendTextToLLM({
-          mode: selectedMode.value,
-          standard: selectedStandard.value || undefined,
-          content: text.trim(),
-          sessionId: activeSessionId,
-        })
+        if (selectedFile) {
+          await sendFileToLLM({
+            mode: selectedMode.value,
+            standard: selectedStandard.value || undefined,
+            file: selectedFile,
+            sessionId: activeSessionId,
+          })
+        } else {
+          await sendTextToLLM({
+            mode: selectedMode.value,
+            standard: selectedStandard.value || undefined,
+            content: text.trim(),
+            sessionId: activeSessionId,
+          })
+        }
+
+        await loadHistory(activeSessionId)
       }
 
       setText('')
@@ -258,8 +348,6 @@ function HomePage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
-
-      await loadHistory(activeSessionId)
     } catch (error) {
       setResponseError(error.message)
     } finally {
@@ -300,7 +388,7 @@ function HomePage() {
 
   function renderIssues(issues) {
     if (!issues || issues.length === 0) {
-      return <p className="workspace-answer-empty">No issues found.</p>
+      return <p className="workspace-answer-empty">Нет замечаний.</p>
     }
 
     return (
@@ -308,18 +396,22 @@ function HomePage() {
         {issues.map((issue, index) => (
           <div key={`${issue.rule_id || 'issue'}-${index}`} className="workspace-answer-issue">
             {issue.rule_id && (
-              <div className="workspace-answer-issue-title">{issue.rule_id}</div>
+              <div className="workspace-history-tag">{issue.rule_id}</div>
             )}
 
-            {issue.problem && (
-              <div className="workspace-answer-issue-text">{issue.problem}</div>
-            )}
+            <div className="workspace-answer-block">
+              <div className="workspace-answer-block-title">Проблема</div>
+              <div className="workspace-answer-problem">{issue.problem}</div>
+            </div>
 
-            {issue.explanation && (
-              <div className="workspace-answer-issue-text workspace-answer-issue-text--muted">
+            <div className="workspace-answer-block">
+              <div className="workspace-answer-block-title workspace-answer-block-title--secondary">
+                Объяснение
+              </div>
+              <div className="workspace-answer-explanation">
                 {issue.explanation}
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>
@@ -340,11 +432,6 @@ function HomePage() {
               <p className="workspace-answer-feedback">{rulesChecker}</p>
             ) : (
               <>
-                {rulesChecker.status && (
-                  <p className="workspace-answer-status">
-                    Status: {rulesChecker.status}
-                  </p>
-                )}
                 {rulesChecker.feedback && (
                   <p className="workspace-answer-feedback">{rulesChecker.feedback}</p>
                 )}
@@ -362,11 +449,6 @@ function HomePage() {
               <p className="workspace-answer-feedback">{standardChecker}</p>
             ) : (
               <>
-                {standardChecker.status && (
-                  <p className="workspace-answer-status">
-                    Status: {standardChecker.status}
-                  </p>
-                )}
                 {standardChecker.feedback && (
                   <p className="workspace-answer-feedback">{standardChecker.feedback}</p>
                 )}
@@ -379,9 +461,37 @@ function HomePage() {
     )
   }
 
+  function renderThinkingState() {
+    const title =
+      selectedMode.value === 'Thinking' ? 'Думаю' : 'Проверяю'
+
+    const subtext =
+      selectedMode.value === 'Thinking'
+        ? 'Анализирую текст и формирую ответ'
+        : 'Обрабатываю запрос'
+
+    return (
+      <div className="workspace-thinking">
+        <div className="workspace-thinking-line">
+          <span className="workspace-thinking-text">{title}</span>
+          <span className="workspace-thinking-dots">
+            <span />
+            <span />
+            <span />
+          </span>
+        </div>
+        <div className="workspace-thinking-subtext">{subtext}</div>
+      </div>
+    )
+  }
+
   function renderHistory() {
     if (historyLoading) {
       return <div className="workspace-answer-state">Loading history...</div>
+    }
+
+    if (isSending) {
+      return renderThinkingState()
     }
 
     if (responseError) {
@@ -392,13 +502,13 @@ function HomePage() {
       )
     }
 
-    if (history.length === 0) {
+    if (displayedHistory.length === 0) {
       return <div className="workspace-answer-state">No response yet.</div>
     }
 
     return (
       <div className="workspace-history-list">
-        {history.map((item) => (
+        {displayedHistory.map((item) => (
           <div key={item.id} className="workspace-history-item">
             <div className="workspace-history-label">Input</div>
             <div className="workspace-history-input">{item.inputContent}</div>
