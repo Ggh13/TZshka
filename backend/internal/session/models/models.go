@@ -33,10 +33,6 @@ type SessionsResponse struct {
 	Sessions []Session `json:"sessions"`
 }
 
-type TokenResponse struct {
-	Token string `json:"token"`
-}
-
 type ErrorResponse struct {
 	Error struct {
 		Code    string `json:"code"`

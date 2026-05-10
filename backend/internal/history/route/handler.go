@@ -16,10 +16,7 @@ type Handler struct {
 }
 
 func New(service *historyService.Service, log *zap.Logger) *Handler {
-	return &Handler{
-		service: service,
-		log:     log,
-	}
+	return &Handler{service: service, log: log}
 }
 
 func (h *Handler) GetHistory(c *gin.Context) {

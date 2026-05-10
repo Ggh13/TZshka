@@ -1,6 +1,6 @@
 # TZshka
 
-Backend проект с авторизацией, регистрацией, управлением сессиями и LLM интеграцией.
+Backend проект с авторизацией, управлением сессиями, LLM интеграцией и историей правок.
 
 ## Технологии
 
@@ -42,8 +42,8 @@ go test -v ./tests/...
 | Поле | Тип | Описание |
 |------|-----|----------|
 | ID | UUID | Уникальный идентификатор |
-| Login | string | Логин пользователя |
 | Email | string | Email пользователя |
+| Role | string | Роль пользователя (admin/user) |
 | CreatedAt | timestamp | Дата создания |
 
 ### Session
@@ -63,7 +63,9 @@ go test -v ./tests/...
 | SessionID | UUID | ID сессии |
 | InputContent | text | Входной текст |
 | ResponseData | JSONB | Ответ от LLM |
-| CreatedAt | timestamp | Дата создания
+| CreatedAt | timestamp | Дата создания |
+
+---
 
 ## API
 
@@ -76,15 +78,31 @@ POST /api/register
 Content-Type: application/json
 
 {
-  "login": "user1",
-  "email": "user1@test.com",
-  "password": "password123"
+  "email": "user@example.com",
+  "password": "password123",
+  "role": "user"
 }
 ```
 
-**Ответ (201):**
+**Успешный ответ (201):**
 ```json
-{"user": {"id": "uuid", "login": "user1", "email": "user1@test.com"}}
+{
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "role": "user"
+  }
+}
+```
+
+**Ошибка - пользователь уже существует (400):**
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "email already exists"
+  }
+}
 ```
 
 #### Вход
@@ -94,14 +112,26 @@ POST /api/login
 Content-Type: application/json
 
 {
-  "login": "user1",
+  "email": "user@example.com",
   "password": "password123"
 }
 ```
 
-**Ответ (200):**
+**Успешный ответ (200):**
 ```json
-{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Ошибка - неверные credentials (401):**
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "invalid credentials"
+  }
+}
 ```
 
 ---
@@ -115,12 +145,30 @@ POST /api/sessions/create
 Authorization: Bearer <token>
 Content-Type: application/json
 
-{"name": "My Session"}
+{
+  "name": "My Session"
+}
 ```
 
-**Ответ (201):**
+**Успешный ответ (201):**
 ```json
-{"session": {"id": "uuid", "name": "My Session", "creatorId": "uuid"}}
+{
+  "session": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "My Session",
+    "creatorId": "00000000-0000-0000-0000-000000000002"
+  }
+}
+```
+
+**Ошибка - без токена (401):**
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "invalid token"
+  }
+}
 ```
 
 #### Получение сессий пользователя
@@ -130,9 +178,17 @@ GET /api/sessions
 Authorization: Bearer <token>
 ```
 
-**Ответ (200):**
+**Успешный ответ (200):**
 ```json
-{"sessions": [{"id": "uuid", "name": "My Session", "creatorId": "uuid"}]}
+{
+  "sessions": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "My Session",
+      "creatorId": "00000000-0000-0000-0000-000000000002"
+    }
+  ]
+}
 ```
 
 #### Вход в сессию
@@ -141,7 +197,30 @@ Authorization: Bearer <token>
 POST /api/sessions/join
 Content-Type: application/json
 
-{"sessionId": "uuid"}
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "session": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "My Session",
+    "creatorId": "00000000-0000-0000-0000-000000000002"
+  }
+}
+```
+
+**Ошибка - сессия не найдена (404):**
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "session not found"
+  }
+}
 ```
 
 #### Удаление сессии
@@ -151,7 +230,16 @@ DELETE /api/sessions
 Authorization: Bearer <token>
 Content-Type: application/json
 
-{"sessionId": "uuid"}
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "message": "session deleted"
+}
 ```
 
 ---
@@ -165,21 +253,39 @@ POST /api/llm/text
 Content-Type: application/json
 
 {
-  "mode": "Instant",       # или "Thinking"
-  "standard": "ГОСТ-19",  # или "ГОСТ-34", или пусто
-  "content": "Текст технического задания",
-  "sessionId": "uuid"     # опционально, для сохранения в историю
+  "mode": "Instant",
+  "standard": "ГОСТ-19",
+  "content": "Текст технического задания (может содержать \"двойные\" и 'одинарные' кавычки любой длины)",
+  "sessionId": "uuid"
 }
 ```
 
-**Ответ (200):**
+- `mode`: "Instant" или "Thinking"
+- `standard`: "ГОСТ-19", "ГОСТ-34" или пусто
+- `content`: текст ТЗ (обязательно, может содержать любые символы)
+- `sessionId`: ID сессии для сохранения в историю (опционально)
+
+**Успешный ответ (200):**
 ```json
 {
   "success": true,
   "code": 200,
   "data": {
-    "rules_checker": "AI вывод",
-    "standard_checker": "AI вывод по стандарту"
+    "rules_checker": {},
+    "standard_checker": {}
+  }
+}
+```
+
+**Ошибка (500):**
+```json
+{
+  "success": false,
+  "code": 500,
+  "data": null,
+  "error": {
+    "type": "internal_error",
+    "message": "LLM service unavailable"
   }
 }
 ```
@@ -194,7 +300,19 @@ Content-Type: multipart/form-data
 # - mode: "Instant" или "Thinking"
 # - standard: "ГОСТ-19", "ГОСТ-34" или пусто
 # - file: текстовый файл (.txt)
-# - sessionId: UUID сессии (опционально)
+# - sessionId: ID сессии (опционально)
+```
+
+**Успешный ответ (200):**
+```json
+{
+  "success": true,
+  "code": 200,
+  "data": {
+    "rules_checker": {},
+    "standard_checker": {}
+  }
+}
 ```
 
 ---
@@ -207,7 +325,7 @@ Content-Type: multipart/form-data
 GET /api/history/:id
 ```
 
-**Ответ (200):**
+**Успешный ответ (200):**
 ```json
 {
   "corrections": [
@@ -222,27 +340,55 @@ GET /api/history/:id
 }
 ```
 
+**Ошибка - невалидный id (400):**
+```json
+{
+  "error": "invalid session id"
+}
+```
+
+---
+
 ## Структура проекта
 
 ```
 backend/
-├── cmd/main.go
-├── config/config.yaml
-├── docker/Dockerfile
+├── cmd/
+│   └── main.go              # Точка входа
+├── config/
+│   └── config.yaml        # Конфигурация
+├── docker/
+│   └── Dockerfile         # Docker образ
 ├── tests/
 │   ├── auth_test.go
 │   └── history_test.go
 ├── internal/
 │   ├── auth/
+│   │   ├── models/        # DTO
+│   │   ├── repository/    # Работа с БД
+│   │   ├── route/        # HTTP хендлеры
+│   │   └── service/      # Бизнес-логика
 │   ├── session/
-│   ├── llm/
+│   │   ├── models/      # DTO
+│   │   ├── repository/  # Работа с БД
+│   │   ├── route/        # HTTP хендлеры
+│   │   └── service/     # Бизнес-логика
 │   ├── history/
-│   ├── config/
-│   └── migrations/
+│   │   ├── models/      # DTO
+│   │   ├── repository/   # Работа с БД
+│   │   ├── route/        # HTTP хендлеры
+│   │   └── service/     # Бизнес-логика
+│   ├── llm/
+│   │   ├── models/      # DTO
+│   │   ├── service/      # Прокси к llm_api
+│   │   └── route/       # HTTP хендлеры
+│   ├── config/           # Загрузка конфига
+│   └── migrations/      # Миграции БД
 ├── pkg/
-│   ├── logger/
-│   ├── postgres/
-│   └── registr/
+│   ├── logger/          # Логгер
+│   ├── postgres/         # Подключение к PostgreSQL
+│   └── registr/          # JWT токены
+├── docker-compose.yml   # Docker Compose
 ├── go.mod
 └── README.md
 ```

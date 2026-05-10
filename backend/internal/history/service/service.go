@@ -14,10 +14,7 @@ type Service struct {
 }
 
 func New(repo *historyRepo.Repository, log *zap.Logger) *Service {
-	return &Service{
-		repo: repo,
-		log:  log,
-	}
+	return &Service{repo: repo, log: log}
 }
 
 func (s *Service) SaveCorrection(ctx context.Context, sessionID uuid.UUID, inputContent string, responseData map[string]interface{}) error {
@@ -27,20 +24,5 @@ func (s *Service) SaveCorrection(ctx context.Context, sessionID uuid.UUID, input
 
 func (s *Service) GetHistory(ctx context.Context, sessionID uuid.UUID) ([]map[string]interface{}, error) {
 	s.log.Info("getting history", zap.String("session_id", sessionID.String()))
-	corrections, err := s.repo.GetBySessionID(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []map[string]interface{}
-	for _, c := range corrections {
-		result = append(result, map[string]interface{}{
-			"id":           c.ID,
-			"sessionId":    c.SessionID,
-			"inputContent": c.InputContent,
-			"responseData": c.ResponseData,
-			"createdAt":    c.CreatedAt,
-		})
-	}
-	return result, nil
+	return s.repo.GetBySessionID(ctx, sessionID)
 }

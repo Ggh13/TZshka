@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
-	historyModels "TZshka/internal/history/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db  *pgxpool.Pool
+	log *zap.Logger
 }
 
-func New(db *pgxpool.Pool) *Repository {
-	return &Repository{db: db}
+func New(db *pgxpool.Pool, log *zap.Logger) *Repository {
+	return &Repository{db: db, log: log}
 }
 
 func (r *Repository) Save(ctx context.Context, sessionID uuid.UUID, inputContent string, responseData map[string]interface{}) error {
@@ -26,7 +27,7 @@ func (r *Repository) Save(ctx context.Context, sessionID uuid.UUID, inputContent
 	return err
 }
 
-func (r *Repository) GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([]historyModels.Correction, error) {
+func (r *Repository) GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([]map[string]interface{}, error) {
 	query := `
 		SELECT id, session_id, input_content, response_data, created_at
 		FROM corrections_history
@@ -39,13 +40,24 @@ func (r *Repository) GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([
 	}
 	defer rows.Close()
 
-	var corrections []historyModels.Correction
+	var results []map[string]interface{}
 	for rows.Next() {
-		var c historyModels.Correction
-		if err := rows.Scan(&c.ID, &c.SessionID, &c.InputContent, &c.ResponseData, &c.CreatedAt); err != nil {
+		var id, sessID uuid.UUID
+		var inputContent string
+		var responseData map[string]interface{}
+		var createdAt time.Time
+
+		if err := rows.Scan(&id, &sessID, &inputContent, &responseData, &createdAt); err != nil {
 			return nil, err
 		}
-		corrections = append(corrections, c)
+
+		results = append(results, map[string]interface{}{
+			"id":           id,
+			"sessionId":    sessID,
+			"inputContent": inputContent,
+			"responseData": responseData,
+			"createdAt":    createdAt,
+		})
 	}
-	return corrections, nil
+	return results, nil
 }
