@@ -18,6 +18,6 @@ class Mode(BaseModel):
     @classmethod
     def as_form(
             cls,
-            mode: Literal["Instant"] = Form("Instant"),
+            mode: Literal["Instant", "Thinking"] = Form("Instant"),
     ):
         return cls(mode=mode)

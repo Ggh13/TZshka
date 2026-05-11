@@ -3,9 +3,11 @@ from langchain_core.prompts import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate
 )
-from app.llm.model import llm
+from app.llm.model import llm, thinking_llm
 from app.llm.prompts import (
+    AGGREGATOR_USER_PROMPT_TEMPLATE,
     USER_PROMPT_TEMPLATE,
+    get_consistency_aggregator_handler,
     get_standard_handler,
     get_text_handler
 )
@@ -58,6 +60,61 @@ CHAIN_STANDARD_HANDLER = (
         "technical_specification": lambda x: x["technical_specification"],
     }
     | standard_chat_prompt
+    | llm
+    | {
+        "status": lambda x: x.status,
+        "issues": lambda x: x.issues,
+        "feedback": lambda x: x.feedback,
+    }
+)
+
+CHAIN_TEXT_HANDLER_THINKING = (
+    {
+        'technical_specification': lambda x: x['technical_specification']
+    }
+    | chat_prompt
+    | thinking_llm
+    | {
+        "status": lambda x: x.status,
+        "issues": lambda x: x.issues,
+        "feedback": lambda x: x.feedback
+    }
+)
+
+CHAIN_STANDARD_HANDLER_THINKING = (
+    {
+        "standard": lambda x: x["standard"],
+        "technical_specification": lambda x: x["technical_specification"],
+    }
+    | standard_chat_prompt
+    | thinking_llm
+    | {
+        "status": lambda x: x.status,
+        "issues": lambda x: x.issues,
+        "feedback": lambda x: x.feedback,
+    }
+)
+
+aggregator_system_prompt = SystemMessagePromptTemplate.from_template(
+    get_consistency_aggregator_handler()
+)
+
+aggregator_user_prompt = HumanMessagePromptTemplate.from_template(
+    AGGREGATOR_USER_PROMPT_TEMPLATE,
+    input_variables=["technical_specification", "checker_outputs"]
+)
+
+aggregator_chat_prompt = ChatPromptTemplate.from_messages([
+    aggregator_system_prompt,
+    aggregator_user_prompt
+])
+
+CHAIN_CONSISTENCY_AGGREGATOR = (
+    {
+        "technical_specification": lambda x: x["technical_specification"],
+        "checker_outputs": lambda x: x["checker_outputs"],
+    }
+    | aggregator_chat_prompt
     | llm
     | {
         "status": lambda x: x.status,
