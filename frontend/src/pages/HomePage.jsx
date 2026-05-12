@@ -10,7 +10,7 @@ import {
 } from '../api/sessions'
 import './HomePage.css'
 
-const USE_MOCK_PREVIEW = true
+const USE_MOCK_PREVIEW = false
 
 const modeOptions = [
   { label: 'Instant', value: 'Instant' },
