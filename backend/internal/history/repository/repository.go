@@ -2,90 +2,62 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-
-	historyModels "TZshka/internal/history/models"
 )
 
-type Repository interface {
-	Create(ctx context.Context, correction *historyModels.Correction) error
-	GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([]historyModels.Correction, error)
-}
-
-type repo struct {
+type Repository struct {
 	db  *pgxpool.Pool
 	log *zap.Logger
 }
 
-func New(db *pgxpool.Pool, log *zap.Logger) Repository {
-	return &repo{db: db, log: log}
+func New(db *pgxpool.Pool, log *zap.Logger) *Repository {
+	return &Repository{db: db, log: log}
 }
 
-func (r *repo) Create(ctx context.Context, correction *historyModels.Correction) error {
-	respDataJSON, err := json.Marshal(correction.ResponseData)
-	if err != nil {
-		r.log.Error("failed to marshal response data", zap.Error(err))
-		return fmt.Errorf("failed to marshal response data: %w", err)
-	}
-
+func (r *Repository) Save(ctx context.Context, sessionID uuid.UUID, inputContent string, responseData map[string]interface{}) error {
 	query := `
 		INSERT INTO corrections_history (id, session_id, input_content, response_data, created_at)
-		VALUES ($1, $2, $3, $4, NOW())
-		RETURNING id`
-
-	var id uuid.UUID
-	err = r.db.QueryRow(ctx, query, correction.ID, correction.SessionID, correction.InputContent, respDataJSON).Scan(&id)
-	if err != nil {
-		r.log.Error("failed to create correction", zap.Error(err))
-		return fmt.Errorf("historyRepo.Create: failed to create correction: %w", err)
-	}
-
-	correction.ID = id
-	r.log.Info("correction created", zap.String("id", correction.ID.String()), zap.String("sessionId", correction.SessionID.String()))
-	return nil
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err := r.db.Exec(ctx, query, uuid.New(), sessionID, inputContent, responseData, time.Now())
+	return err
 }
 
-func (r *repo) GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([]historyModels.Correction, error) {
-	query := `SELECT id, session_id, input_content, response_data, created_at FROM corrections_history WHERE session_id = $1 ORDER BY created_at DESC`
-
+func (r *Repository) GetBySessionID(ctx context.Context, sessionID uuid.UUID) ([]map[string]interface{}, error) {
+	query := `
+		SELECT id, session_id, input_content, response_data, created_at
+		FROM corrections_history
+		WHERE session_id = $1
+		ORDER BY created_at DESC
+	`
 	rows, err := r.db.Query(ctx, query, sessionID)
 	if err != nil {
-		r.log.Error("failed to get corrections", zap.Error(err))
-		return nil, fmt.Errorf("historyRepo.GetBySessionID: failed to get corrections: %w", err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	var corrections []historyModels.Correction
+	var results []map[string]interface{}
 	for rows.Next() {
-		var correction historyModels.Correction
-		var responseDataJSON []byte
-		var createdAt interface{}
+		var id, sessID uuid.UUID
+		var inputContent string
+		var responseData map[string]interface{}
+		var createdAt time.Time
 
-		if err := rows.Scan(&correction.ID, &correction.SessionID, &correction.InputContent, &responseDataJSON, &createdAt); err != nil {
-			r.log.Error("failed to scan correction", zap.Error(err))
-			return nil, fmt.Errorf("failed to scan correction: %w", err)
+		if err := rows.Scan(&id, &sessID, &inputContent, &responseData, &createdAt); err != nil {
+			return nil, err
 		}
 
-		if err := json.Unmarshal(responseDataJSON, &correction.ResponseData); err != nil {
-			r.log.Error("failed to unmarshal response data", zap.Error(err))
-			return nil, fmt.Errorf("failed to unmarshal response data: %w", err)
-		}
-
-		corrections = append(corrections, correction)
+		results = append(results, map[string]interface{}{
+			"id":           id,
+			"sessionId":    sessID,
+			"inputContent": inputContent,
+			"responseData": responseData,
+			"createdAt":    createdAt,
+		})
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	if corrections == nil {
-		return []historyModels.Correction{}, nil
-	}
-
-	return corrections, nil
+	return results, nil
 }

@@ -14,32 +14,17 @@ import (
 )
 
 type Handler struct {
-	service  *sessionService.Service
-	tokenSvc *registr.TokenService
-	log      *zap.Logger
+	service      *sessionService.Service
+	tokenService *registr.TokenService
+	log          *zap.Logger
 }
 
-func New(service *sessionService.Service, tokenSvc *registr.TokenService, log *zap.Logger) *Handler {
+func New(service *sessionService.Service, tokenService *registr.TokenService, log *zap.Logger) *Handler {
 	return &Handler{
-		service:  service,
-		tokenSvc: tokenSvc,
-		log:      log,
+		service:      service,
+		tokenService: tokenService,
+		log:          log,
 	}
-}
-
-func (h *Handler) getUserID(c *gin.Context) (uuid.UUID, error) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		return uuid.Nil, registr.ErrInvalidToken
-	}
-
-	tokenStr := authHeader[len("Bearer "):]
-	claims, err := h.tokenSvc.ValidateToken(c.Request.Context(), tokenStr)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	return uuid.Parse(claims.UserID)
 }
 
 func (h *Handler) CreateSession(c *gin.Context) {
@@ -61,24 +46,23 @@ func (h *Handler) CreateSession(c *gin.Context) {
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INVALID_REQUEST", Message: "invalid request"},
+			}{Code: "INVALID_REQUEST", Message: "name is required"},
 		})
 		return
 	}
 
-	session, err := h.service.CreateSession(c.Request.Context(), req.Name, userID)
+	session, err := h.service.Create(c.Request.Context(), req.Name, userID)
 	if err != nil {
 		h.log.Error("failed to create session", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INTERNAL_ERROR", Message: "internal server error"},
+			}{Code: "INTERNAL_ERROR", Message: "failed to create session"},
 		})
 		return
 	}
 
-	h.log.Info("session created successfully", zap.String("sessionId", session.ID.String()))
 	c.JSON(http.StatusCreated, sessionModels.SessionResponse{Session: *session})
 }
 
@@ -94,19 +78,18 @@ func (h *Handler) GetSessions(c *gin.Context) {
 		return
 	}
 
-	sessions, err := h.service.GetUserSessions(c.Request.Context(), userID)
+	sessions, err := h.service.GetByUser(c.Request.Context(), userID)
 	if err != nil {
 		h.log.Error("failed to get sessions", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INTERNAL_ERROR", Message: "internal server error"},
+			}{Code: "INTERNAL_ERROR", Message: "failed to get sessions"},
 		})
 		return
 	}
 
-	h.log.Info("sessions fetched successfully", zap.Int("count", len(sessions)))
 	c.JSON(http.StatusOK, sessionModels.SessionsResponse{Sessions: sessions})
 }
 
@@ -129,13 +112,14 @@ func (h *Handler) DeleteSession(c *gin.Context) {
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INVALID_REQUEST", Message: "invalid request"},
+			}{Code: "INVALID_REQUEST", Message: "sessionId is required"},
 		})
 		return
 	}
 
 	sessionID, err := uuid.Parse(req.SessionID)
 	if err != nil {
+		h.log.Error("invalid session id", zap.Error(err))
 		c.JSON(http.StatusBadRequest, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
@@ -145,38 +129,18 @@ func (h *Handler) DeleteSession(c *gin.Context) {
 		return
 	}
 
-	err = h.service.DeleteSession(c.Request.Context(), sessionID, userID)
-	if errors.Is(err, sessionService.ErrSessionNotFound) {
-		c.JSON(http.StatusNotFound, sessionModels.ErrorResponse{
-			Error: struct {
-				Code    string `json:"code"`
-				Message string `json:"message"`
-			}{Code: "NOT_FOUND", Message: "session not found"},
-		})
-		return
-	}
-	if errors.Is(err, sessionService.ErrUnauthorized) {
-		c.JSON(http.StatusForbidden, sessionModels.ErrorResponse{
-			Error: struct {
-				Code    string `json:"code"`
-				Message string `json:"message"`
-			}{Code: "FORBIDDEN", Message: "unauthorized"},
-		})
-		return
-	}
-	if err != nil {
+	if err := h.service.Delete(c.Request.Context(), sessionID, userID); err != nil {
 		h.log.Error("failed to delete session", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INTERNAL_ERROR", Message: "internal server error"},
+			}{Code: "INTERNAL_ERROR", Message: "failed to delete session"},
 		})
 		return
 	}
 
-	h.log.Info("session deleted successfully", zap.String("sessionId", sessionID.String()))
-	c.JSON(http.StatusOK, sessionModels.SessionResponse{})
+	c.JSON(http.StatusOK, gin.H{"message": "session deleted"})
 }
 
 func (h *Handler) JoinSession(c *gin.Context) {
@@ -187,13 +151,14 @@ func (h *Handler) JoinSession(c *gin.Context) {
 			Error: struct {
 				Code    string `json:"code"`
 				Message string `json:"message"`
-			}{Code: "INVALID_REQUEST", Message: "invalid request"},
+			}{Code: "INVALID_REQUEST", Message: "sessionId is required"},
 		})
 		return
 	}
 
 	sessionID, err := uuid.Parse(req.SessionID)
 	if err != nil {
+		h.log.Error("invalid session id", zap.Error(err))
 		c.JSON(http.StatusBadRequest, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
@@ -203,8 +168,9 @@ func (h *Handler) JoinSession(c *gin.Context) {
 		return
 	}
 
-	session, err := h.service.JoinSession(c.Request.Context(), sessionID)
-	if errors.Is(err, sessionService.ErrSessionNotFound) {
+	session, err := h.service.GetByID(c.Request.Context(), sessionID)
+	if err != nil {
+		h.log.Error("session not found", zap.Error(err))
 		c.JSON(http.StatusNotFound, sessionModels.ErrorResponse{
 			Error: struct {
 				Code    string `json:"code"`
@@ -213,19 +179,23 @@ func (h *Handler) JoinSession(c *gin.Context) {
 		})
 		return
 	}
-	if err != nil {
-		h.log.Error("failed to join session", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, sessionModels.ErrorResponse{
-			Error: struct {
-				Code    string `json:"code"`
-				Message string `json:"message"`
-			}{Code: "INTERNAL_ERROR", Message: "internal server error"},
-		})
-		return
+
+	c.JSON(http.StatusOK, sessionModels.SessionResponse{Session: *session})
+}
+
+func (h *Handler) getUserID(c *gin.Context) (uuid.UUID, error) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return uuid.Nil, errors.New("no auth header")
 	}
 
-	h.log.Info("user joined session", zap.String("sessionId", session.ID.String()))
-	c.JSON(http.StatusOK, sessionModels.SessionResponse{Session: *session})
+	tokenStr := authHeader[7:]
+	claims, err := h.tokenService.ValidateToken(c.Request.Context(), tokenStr)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return uuid.Parse(claims.UserID)
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {

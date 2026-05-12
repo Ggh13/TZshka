@@ -7,17 +7,11 @@ import (
 )
 
 type Correction struct {
-	ID            uuid.UUID `json:"id"`
-	SessionID     uuid.UUID `json:"sessionId"`
-	InputContent  string    `json:"inputContent"`
-	ResponseData  any       `json:"responseData"`
-	CreatedAt     *time.Time `json:"createdAt,omitempty"`
-}
-
-type CreateCorrectionRequest struct {
-	SessionID    string `json:"sessionId" binding:"required"`
-	InputContent string `json:"inputContent" binding:"required"`
-	ResponseData any   `json:"responseData" binding:"required"`
+	ID           uuid.UUID              `json:"id"`
+	SessionID    uuid.UUID              `json:"sessionId"`
+	InputContent string                 `json:"inputContent"`
+	ResponseData map[string]interface{} `json:"responseData"`
+	CreatedAt    *time.Time             `json:"createdAt,omitempty"`
 }
 
 type CorrectionsResponse struct {
