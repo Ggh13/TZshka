@@ -24,7 +24,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - OPENROUTER_API_KEY=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
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
 
   app:
     build:

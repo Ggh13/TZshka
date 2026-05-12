@@ -89,7 +89,7 @@ async def get_response_by_text(
             ).model_dump()
         )
 
-    except Exception:
+    except Exception as e:
         return JSONResponse(
             content=LLMResponseSchema(
                 success=False,
@@ -97,7 +97,7 @@ async def get_response_by_text(
                 data=None,
                 error=ErrorSchema(
                     type="internal_error",
-                    message="LLM service unavailable"
+                    message=f"LLM service unavailable {e}"
                 )
             ).model_dump()
         )
