@@ -74,7 +74,7 @@ func main() {
 
 	httpClient := &http.Client{}
 	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
-	llmHandler := llmRoute.New(llmSvc, zapLog)
+	llmHandler := llmRoute.New(llmSvc, historySvc, tokenSvc, zapLog)
 
 	r := gin.Default()
 	r.Use(corsMiddleware())
