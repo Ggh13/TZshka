@@ -5,21 +5,28 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	historyService "TZshka/internal/history/service"
 	llmModels "TZshka/internal/llm/models"
 	llmService "TZshka/internal/llm/service"
+	"TZshka/pkg/registr"
 )
 
 type Handler struct {
-	service *llmService.Service
-	log     *zap.Logger
+	service        *llmService.Service
+	historyService *historyService.Service
+	tokenService   *registr.TokenService
+	log            *zap.Logger
 }
 
-func New(service *llmService.Service, log *zap.Logger) *Handler {
+func New(service *llmService.Service, historyService *historyService.Service, tokenService *registr.TokenService, log *zap.Logger) *Handler {
 	return &Handler{
-		service: service,
-		log:     log,
+		service:        service,
+		historyService: historyService,
+		tokenService:   tokenService,
+		log:            log,
 	}
 }
 
@@ -50,12 +57,31 @@ func (h *Handler) ProcessText(c *gin.Context) {
 		return
 	}
 
+	if req.SessionID != "" && resp.Success {
+		userID := h.getUserIDFromRequest(c)
+		sessionID, err := uuid.Parse(req.SessionID)
+		if err == nil {
+			responseData := make(map[string]interface{})
+			if resp.Data != nil {
+				responseData = map[string]interface{}{
+					"data":    resp.Data,
+					"success": resp.Success,
+					"code":    resp.Code,
+				}
+			}
+			if userID != uuid.Nil {
+				h.historyService.SaveCorrection(c.Request.Context(), sessionID, userID, req.Content, responseData)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
 func (h *Handler) ProcessFile(c *gin.Context) {
 	mode := c.PostForm("mode")
 	standard := c.PostForm("standard")
+	sessionID := c.PostForm("sessionId")
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -108,7 +134,44 @@ func (h *Handler) ProcessFile(c *gin.Context) {
 		return
 	}
 
+	if sessionID != "" && resp.Success {
+		userID := h.getUserIDFromRequest(c)
+		sessID, err := uuid.Parse(sessionID)
+		if err == nil {
+			responseData := make(map[string]interface{})
+			if resp.Data != nil {
+				responseData = map[string]interface{}{
+					"data":    resp.Data,
+					"success": resp.Success,
+					"code":    resp.Code,
+				}
+			}
+			if userID != uuid.Nil {
+				h.historyService.SaveCorrection(c.Request.Context(), sessID, userID, string(content), responseData)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) getUserIDFromRequest(c *gin.Context) uuid.UUID {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" || len(authHeader) < 7 {
+		return uuid.Nil
+	}
+
+	tokenStr := authHeader[7:]
+	claims, err := h.tokenService.ValidateToken(c.Request.Context(), tokenStr)
+	if err != nil {
+		return uuid.Nil
+	}
+
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return uuid.Nil
+	}
+	return userID
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
