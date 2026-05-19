@@ -157,8 +157,8 @@
 
 .workspace-input-card {
   width: 100%;
-  max-width: 760px;
-  min-height: 153px;
+  max-width: 920px;
+  min-height: 240px;
   background: linear-gradient(180deg, #1f2024 0%, #1c1d22 100%);
   border-radius: 28px;
   padding: 24px 24px 18px;
@@ -171,7 +171,7 @@
 
 .workspace-textarea {
   width: 100%;
-  min-height: 52px;
+  min-height: 140px;
   resize: none;
   border: none;
   outline: none;
@@ -336,8 +336,8 @@
 
 .workspace-answer-card {
   width: 100%;
-  max-width: 760px;
-  min-height: 335px;
+  max-width: 920px;
+  min-height: 520px;
   margin-top: 22px;
   background: linear-gradient(180deg, #1f2024 0%, #1c1d22 100%);
   border-radius: 28px;

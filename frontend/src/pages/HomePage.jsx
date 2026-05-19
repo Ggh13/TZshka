@@ -514,7 +514,7 @@ function HomePage() {
             <div className="workspace-history-input">{item.inputContent}</div>
 
             <div className="workspace-history-label">Answer</div>
-            {renderLLMBlock(item.responseData)}
+            {renderLLMBlock(item.responseData?.data || item.responseData)}
           </div>
         ))}
       </div>
