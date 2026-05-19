@@ -559,12 +559,6 @@
   color: #b9b9b9;
 }
 
-.workspace-history-input {
-  font-size: 16px;
-  line-height: 1.55;
-  color: #ffffff;
-  white-space: pre-wrap;
-}
 
 .workspace-history-tag {
   display: inline-flex;
@@ -684,4 +678,36 @@
     opacity: 1;
     transform: translateY(-2px);
   }
+}
+
+.workspace-history-input {
+  font-size: 16px;
+  line-height: 1.55;
+  color: #ffffff;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.workspace-history-input--expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.workspace-history-toggle {
+  align-self: flex-start;
+  margin-top: -4px;
+  border: none;
+  background: transparent;
+  color: #cfcfcf;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.workspace-history-toggle:hover {
+  color: #ffffff;
 }
