@@ -162,7 +162,7 @@ function HomePage() {
       const loadedSessions = await getSessions()
 
       if (loadedSessions.length === 0) {
-        const created = await createSession('Chat')
+        const created = await createSession('Chat 1')
         setSessions([created])
         setActiveSessionId(created.id)
         nextChatNumberRef.current = 1
@@ -180,7 +180,7 @@ function HomePage() {
         .filter(Boolean)
 
       nextChatNumberRef.current =
-        numbered.length > 0 ? Math.max(...numbered) + 1 : 1
+        numbered.length > 0 ? Math.max(...numbered) + 1 : 2
     } catch (error) {
       setResponseError(error.message)
     }
@@ -230,12 +230,9 @@ function HomePage() {
 
   async function handleNewChat() {
     try {
-      const name =
-        nextChatNumberRef.current === 1
-          ? 'Chat 1'
-          : `Chat ${nextChatNumberRef.current}`
+      const name = `Chat ${nextChatNumberRef.current}`
 
-      const created = await createSession(name)
+      const created = await createSession('Chat 1')
 
       nextChatNumberRef.current += 1
 
@@ -530,7 +527,7 @@ function HomePage() {
         </button>
 
         <nav className="workspace-sidebar-nav">
-          <div className="workspace-sidebar-title">Chat</div>
+          <div className="workspace-sidebar-title">Chats</div>
 
           {sessions.map((session) => (
             <div
