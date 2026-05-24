@@ -5,13 +5,12 @@ from langchain_core.exceptions import OutputParserException
 from pydantic import ValidationError
 
 from app.schemas.text_message import TextInput as TextInputSchema
-from app.schemas.llm import LLMResponse as LLMResponseSchema, LLMCombinedOutput as LLMCombinedOutputSchema
+from app.schemas.llm import LLMResponse as LLMResponseSchema
 from app.schemas.error import Error as ErrorSchema
 from app.schemas.mode import Mode as ModeSchema
 from app.schemas.standard import Standard as StandardSchema
 
-from app.llm.chains import CHAIN_TEXT_HANDLER as RULES_CHECKER
-from app.llm.chains import CHAIN_STANDARD_HANDLER as STANDARD_CHECKER
+from app.llm.services import check_text
 
 
 router = APIRouter(
@@ -28,25 +27,16 @@ async def get_response_by_text(
 ):
     user_content = text.content
     try:
-        rules_output = RULES_CHECKER.invoke({
-            "technical_specification": user_content
-        })
-
-        standard_output = None
-
-        if standard.standard is not None:
-            standard_output = STANDARD_CHECKER.invoke({
-                "standard": standard.standard,
-                "technical_specification": user_content
-            })
+        output = check_text(
+            mode=mode.mode,
+            technical_specification=user_content,
+            standard=standard.standard
+        )
 
         return LLMResponseSchema(
             success=True,
             code=status.HTTP_200_OK,
-            data=LLMCombinedOutputSchema(
-                rules_checker=rules_output,
-                standard_checker=standard_output
-            ),
+            data=output,
             error=None
         )
 
@@ -97,7 +87,8 @@ async def get_response_by_text(
                 data=None,
                 error=ErrorSchema(
                     type="internal_error",
-                    message=f"LLM service unavailable {e}"
+                    message=f"LLM service unavailable: {str(e)}"
+
                 )
             ).model_dump()
         )
