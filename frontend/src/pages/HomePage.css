@@ -157,8 +157,8 @@
 
 .workspace-input-card {
   width: 100%;
-  max-width: 760px;
-  min-height: 153px;
+  max-width: 920px;
+  min-height: 240px;
   background: linear-gradient(180deg, #1f2024 0%, #1c1d22 100%);
   border-radius: 28px;
   padding: 24px 24px 18px;
@@ -171,7 +171,7 @@
 
 .workspace-textarea {
   width: 100%;
-  min-height: 52px;
+  min-height: 140px;
   resize: none;
   border: none;
   outline: none;
@@ -336,8 +336,8 @@
 
 .workspace-answer-card {
   width: 100%;
-  max-width: 760px;
-  min-height: 335px;
+  max-width: 920px;
+  min-height: 520px;
   margin-top: 22px;
   background: linear-gradient(180deg, #1f2024 0%, #1c1d22 100%);
   border-radius: 28px;
@@ -559,12 +559,6 @@
   color: #b9b9b9;
 }
 
-.workspace-history-input {
-  font-size: 16px;
-  line-height: 1.55;
-  color: #ffffff;
-  white-space: pre-wrap;
-}
 
 .workspace-history-tag {
   display: inline-flex;
@@ -684,4 +678,36 @@
     opacity: 1;
     transform: translateY(-2px);
   }
+}
+
+.workspace-history-input {
+  font-size: 16px;
+  line-height: 1.55;
+  color: #ffffff;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.workspace-history-input--expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.workspace-history-toggle {
+  align-self: flex-start;
+  margin-top: -4px;
+  border: none;
+  background: transparent;
+  color: #cfcfcf;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.workspace-history-toggle:hover {
+  color: #ffffff;
 }

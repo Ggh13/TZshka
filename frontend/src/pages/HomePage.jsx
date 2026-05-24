@@ -76,7 +76,7 @@ function HomePage() {
   const fileInputRef = useRef(null)
   const modeDropdownRef = useRef(null)
   const standardDropdownRef = useRef(null)
-  const nextChatNumberRef = useRef(1)
+  const nextChatNumberRef = useRef(2)
 
   const [sessions, setSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
@@ -94,6 +94,7 @@ function HomePage() {
   const [standardOpen, setStandardOpen] = useState(false)
   const [selectedMode, setSelectedMode] = useState(modeOptions[0])
   const [selectedStandard, setSelectedStandard] = useState(standardOptions[1])
+  const [expandedInputs, setExpandedInputs] = useState({})
 
   const displayName = useMemo(() => {
     return (
@@ -162,10 +163,10 @@ function HomePage() {
       const loadedSessions = await getSessions()
 
       if (loadedSessions.length === 0) {
-        const created = await createSession('Chat')
+        const created = await createSession('Chat 1')
         setSessions([created])
         setActiveSessionId(created.id)
-        nextChatNumberRef.current = 1
+        nextChatNumberRef.current = 2
         return
       }
 
@@ -180,7 +181,7 @@ function HomePage() {
         .filter(Boolean)
 
       nextChatNumberRef.current =
-        numbered.length > 0 ? Math.max(...numbered) + 1 : 1
+        numbered.length > 0 ? Math.max(...numbered) + 1 : 2
     } catch (error) {
       setResponseError(error.message)
     }
@@ -230,11 +231,7 @@ function HomePage() {
 
   async function handleNewChat() {
     try {
-      const name =
-        nextChatNumberRef.current === 1
-          ? 'Chat 1'
-          : `Chat ${nextChatNumberRef.current}`
-
+      const name = `Chat ${nextChatNumberRef.current}`
       const created = await createSession(name)
 
       nextChatNumberRef.current += 1
@@ -263,10 +260,11 @@ function HomePage() {
       const nextSessions = sessions.filter((session) => session.id !== sessionId)
 
       if (nextSessions.length === 0) {
-        const created = await createSession('Chat')
+        const created = await createSession('Chat 1')
         setSessions([created])
         setActiveSessionId(created.id)
         setBackendHistory([])
+        nextChatNumberRef.current = 2
         return
       }
 
@@ -288,6 +286,13 @@ function HomePage() {
     const file = event.target.files?.[0] || null
     setSelectedFile(file)
     setResponseError('')
+  }
+
+  function toggleInputExpanded(itemId) {
+    setExpandedInputs((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }))
   }
 
   async function handleSend() {
@@ -394,7 +399,10 @@ function HomePage() {
     return (
       <div className="workspace-answer-issues">
         {issues.map((issue, index) => (
-          <div key={`${issue.rule_id || 'issue'}-${index}`} className="workspace-answer-issue">
+          <div
+            key={`${issue.rule_id || 'issue'}-${index}`}
+            className="workspace-answer-issue"
+          >
             {issue.rule_id && (
               <div className="workspace-history-tag">{issue.rule_id}</div>
             )}
@@ -511,10 +519,27 @@ function HomePage() {
         {displayedHistory.map((item) => (
           <div key={item.id} className="workspace-history-item">
             <div className="workspace-history-label">Input</div>
-            <div className="workspace-history-input">{item.inputContent}</div>
+
+            <div
+              className={`workspace-history-input ${
+                expandedInputs[item.id] ? 'workspace-history-input--expanded' : ''
+              }`}
+            >
+              {item.inputContent}
+            </div>
+
+            {item.inputContent && item.inputContent.split('\n').length > 5 && (
+              <button
+                type="button"
+                className="workspace-history-toggle"
+                onClick={() => toggleInputExpanded(item.id)}
+              >
+                {expandedInputs[item.id] ? 'Скрыть' : 'Показать еще'}
+              </button>
+            )}
 
             <div className="workspace-history-label">Answer</div>
-            {renderLLMBlock(item.responseData)}
+            {renderLLMBlock(item.responseData?.data || item.responseData)}
           </div>
         ))}
       </div>
@@ -530,7 +555,7 @@ function HomePage() {
         </button>
 
         <nav className="workspace-sidebar-nav">
-          <div className="workspace-sidebar-title">Chat</div>
+          <div className="workspace-sidebar-title">Chats</div>
 
           {sessions.map((session) => (
             <div
@@ -572,7 +597,11 @@ function HomePage() {
           </div>
         </header>
 
-        <section className={`workspace-content ${hasAnswerBlock ? 'workspace-content--with-answer' : ''}`}>
+        <section
+          className={`workspace-content ${
+            hasAnswerBlock ? 'workspace-content--with-answer' : ''
+          }`}
+        >
           {!hasAnswerBlock && <h1 className="workspace-title">Let’s get started!</h1>}
 
           <div className="workspace-input-card">

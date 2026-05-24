@@ -6,11 +6,18 @@ from app.schemas.llm import LLMOutput as LLMOutputSchema
 
 load_dotenv()
 
-llm = ChatOpenRouter(
+base_llm = ChatOpenRouter(
     # model="meta-llama/llama-3.3-70b-instruct",
     model="qwen/qwen3-next-80b-a3b-instruct",
     temperature=0,
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
-llm = llm.with_structured_output(LLMOutputSchema)
+thinking_base_llm = ChatOpenRouter(
+    model="qwen/qwen3-next-80b-a3b-instruct",
+    temperature=0.3,
+    api_key=os.getenv("OPENROUTER_API_KEY")
+)
+
+llm = base_llm.with_structured_output(LLMOutputSchema)
+thinking_llm = thinking_base_llm.with_structured_output(LLMOutputSchema)
