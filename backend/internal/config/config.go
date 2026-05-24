@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Port     string          `yaml:"PORT"`
 	Secret   string          `yaml:"JWT_SECRET"`
+	LLMURL   string          `yaml:"LLM_API_URL"`
 	Postgres postgres.Config `yaml:"POSTGRES"`
 }
 

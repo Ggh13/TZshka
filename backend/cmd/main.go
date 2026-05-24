@@ -11,12 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"TZshka/internal/auth/repository"
-	"TZshka/internal/auth/route"
-	"TZshka/internal/auth/service"
+	authRepo "TZshka/internal/auth/repository"
+	authRoute "TZshka/internal/auth/route"
+	authService "TZshka/internal/auth/service"
 	"TZshka/internal/config"
+	historyRepo "TZshka/internal/history/repository"
+	historyRoute "TZshka/internal/history/route"
+	historyService "TZshka/internal/history/service"
+	llmRoute "TZshka/internal/llm/route"
+	llmService "TZshka/internal/llm/service"
 	"TZshka/internal/migrations"
+	sessionRepo "TZshka/internal/session/repository"
+	sessionRoute "TZshka/internal/session/route"
+	sessionService "TZshka/internal/session/service"
 	"TZshka/pkg/postgres"
+	"TZshka/pkg/registr"
 )
 
 func main() {
@@ -49,14 +58,31 @@ func main() {
 
 	runMigrations(ctx, pgDB, zapLog)
 
-	authRepo := repository.New(pgDB, zapLog)
-	authSvc := service.New(authRepo, cfg.Secret, zapLog)
-	authHandler := route.New(authSvc, zapLog)
+	authRepoInstance := authRepo.New(pgDB, zapLog)
+	authSvc := authService.New(authRepoInstance, cfg.Secret, zapLog)
+	authHandler := authRoute.New(authSvc, zapLog)
+
+	tokenSvc := registr.NewTokenService(cfg.Secret)
+
+	sessionRepoInstance := sessionRepo.New(pgDB, zapLog)
+	sessionSvc := sessionService.New(sessionRepoInstance, zapLog)
+	sessionHandler := sessionRoute.New(sessionSvc, tokenSvc, zapLog)
+
+	historyRepoInstance := historyRepo.New(pgDB, zapLog)
+	historySvc := historyService.New(historyRepoInstance, zapLog)
+	historyHandler := historyRoute.New(historySvc, zapLog)
+
+	httpClient := &http.Client{}
+	llmSvc := llmService.New(httpClient, cfg.LLMURL, zapLog)
+	llmHandler := llmRoute.New(llmSvc, historySvc, tokenSvc, zapLog)
 
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
 	authHandler.RegisterRoutes(r)
+	sessionHandler.RegisterRoutes(r)
+	historyHandler.RegisterRoutes(r)
+	llmHandler.RegisterRoutes(r)
 
 	zapLog.Info("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {

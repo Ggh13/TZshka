@@ -1,6 +1,7 @@
 PORT: 8080
 REST_HOST: "0.0.0.0"
 JWT_SECRET: "your-secret-key-here"
+LLM_API_URL: "http://llm_api:8001"
 
 POSTGRES:
   host: "postgres"
@@ -10,3 +11,5 @@ POSTGRES:
   database: "forumdb"
   min_conns: 5
   max_conns: 10
+
+

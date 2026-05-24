@@ -88,6 +88,7 @@ async def get_response_by_text(
                 error=ErrorSchema(
                     type="internal_error",
                     message=f"LLM service unavailable: {str(e)}"
+
                 )
             ).model_dump()
         )
